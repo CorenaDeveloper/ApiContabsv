@@ -63,6 +63,8 @@ public partial class VentaConsumidor
 
     public string NumeroControlInterno { get; set; }
 
+    public string NumeroDocumento { get; set; }
+
     public virtual ClaseDocumento IdClaseDocumentoNavigation { get; set; }
 
     public virtual ClientexClt IdClienteCitNavigation { get; set; }

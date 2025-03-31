@@ -12,6 +12,6 @@
     <WebStackScaffolding_DbContextTypeFullName>ApiContabsv.Models.SeguridadContext</WebStackScaffolding_DbContextTypeFullName>
     <WebStackScaffolding_IsAsyncSelected>False</WebStackScaffolding_IsAsyncSelected>
     <WebStackScaffolding_IsViewGenerationSelected>False</WebStackScaffolding_IsViewGenerationSelected>
-    <NameOfLastUsedPublishProfile>C:\Users\programador04\Documents\GitHub\ApiContabsv\Properties\PublishProfiles\Default Settings.pubxml</NameOfLastUsedPublishProfile>
+    <NameOfLastUsedPublishProfile>C:\Users\programador04\Documents\GitHub\ApiContabsv\Properties\PublishProfiles\Pro Api Contabsv.pubxml</NameOfLastUsedPublishProfile>
   </PropertyGroup>
 </Project>

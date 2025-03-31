@@ -176,3 +176,4 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Debug\net8.0\refint\ApiC
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Debug\net8.0\ApiContabsv.pdb
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Debug\net8.0\ApiContabsv.genruntimeconfig.cache
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Debug\net8.0\ref\ApiContabsv.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Debug\net8.0\ApiContabsv.sourcelink.json

@@ -15,7 +15,11 @@ public partial class TipoDocumento
 
     public string SectorP { get; set; }
 
+    public string NombreCorto { get; set; }
+
     public virtual ICollection<Compra> Compras { get; set; } = new List<Compra>();
+
+    public virtual ICollection<Resolucion> Resolucions { get; set; } = new List<Resolucion>();
 
     public virtual ICollection<VentaConsumidor> VentaConsumidors { get; set; } = new List<VentaConsumidor>();
 

@@ -25,6 +25,8 @@ public partial class ContabilidadContext : DbContext
 
     public virtual DbSet<Proveedore> Proveedores { get; set; }
 
+    public virtual DbSet<Resolucion> Resolucions { get; set; }
+
     public virtual DbSet<Sector> Sectors { get; set; }
 
     public virtual DbSet<TipoDocumento> TipoDocumentos { get; set; }
@@ -310,6 +312,25 @@ public partial class ContabilidadContext : DbContext
                 .HasConstraintName("FK_Proveedores_Sector");
         });
 
+        modelBuilder.Entity<Resolucion>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Resoluci__3214EC07F356BB61");
+
+            entity.ToTable("Resolucion");
+
+            entity.Property(e => e.IdCliente).HasColumnName("idCliente");
+            entity.Property(e => e.NumeroResolucion)
+                .HasMaxLength(60)
+                .IsUnicode(false);
+            entity.Property(e => e.NumeroSerie)
+                .HasMaxLength(30)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.IdTipoDocumentoNavigation).WithMany(p => p.Resolucions)
+                .HasForeignKey(d => d.IdTipoDocumento)
+                .HasConstraintName("FK_Resolucion_TipoDocumento");
+        });
+
         modelBuilder.Entity<Sector>(entity =>
         {
             entity.HasKey(e => e.IdSector).HasName("PK__Sector__5D8E1E74B7735F48");
@@ -342,6 +363,10 @@ public partial class ContabilidadContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("nombre");
+            entity.Property(e => e.NombreCorto)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("nombreCorto");
             entity.Property(e => e.SectorP)
                 .HasMaxLength(60)
                 .IsUnicode(false)
@@ -391,6 +416,9 @@ public partial class ContabilidadContext : DbContext
                 .HasMaxLength(20)
                 .IsUnicode(false)
                 .HasColumnName("numeroControlInterno");
+            entity.Property(e => e.NumeroDocumento)
+                .HasMaxLength(60)
+                .IsUnicode(false);
             entity.Property(e => e.NumeroMaquinaRegistradora)
                 .HasMaxLength(20)
                 .IsUnicode(false);

@@ -21,6 +21,9 @@ namespace ApiContabsv.DTO.DB_ContabilidadDTO
 
         [SwaggerSchema(Description = "Número de resolución")]
         public string NumeroResolucion { get; set; }
+        
+        [SwaggerSchema(Description = "Número de documento emitido")]
+        public string NumeroDocumento { get; set; }
 
         [SwaggerSchema(Description = "Serie del documento")]
         public string SerieDocumento { get; set; }
@@ -99,6 +102,9 @@ namespace ApiContabsv.DTO.DB_ContabilidadDTO
 
         [SwaggerSchema(Description = "Número de resolución")]
         public string NumeroResolucion { get; set; }
+
+        [SwaggerSchema(Description = "Número de documento emitido")]
+        public string NumeroDocumento { get; set; }
 
         [SwaggerSchema(Description = "Serie del documento")]
         public string SerieDocumento { get; set; }

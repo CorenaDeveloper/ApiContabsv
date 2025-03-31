@@ -1,8 +1,8 @@
-﻿using ApiContabsv.Models.Contabilidad;
+﻿using ApiContabsv.DTO.DB_ContabilidadDTO;
+using ApiContabsv.Models.Contabilidad;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
-using System.Linq.Expressions;
 
 
 namespace ApiContabsv.Controllers
@@ -18,56 +18,34 @@ namespace ApiContabsv.Controllers
             this.contabilidadContext = contabilidadContext;
         }
 
-        // 🔵 LISTAR TODAS LAS COMPRAS
-        /// <summary>
-        /// </summary>
-        /// <param name="idCliente"></param>
-        /// <param name="fechaInicio"></param>
-        /// <param name="fechaFin"></param>
-        /// <param name="tipoFecha">En fecha  si : 1 = FechaPresentacion, 2 = FechaEmision </param>
-        /// <returns></returns>
         [HttpGet("Compras")]
         [SwaggerOperation(
          Summary = "LISTA DE COMPRA EN RANGO DE FECHA",
-         Description = "Este endpoint permite listar todas la compra en un rango especifico de fechas."
+         Description = "Este endpoint permite listar todas la compra en un rango especifico de fechas y tipo 1 es fecha de presentacion y 2 fecha de Emision de documento."
         )]
         [SwaggerResponse(200, "Consulta exitosa")]
         [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
         [SwaggerResponse(404, "Datos no encontrado")]
         [SwaggerResponse(500, "Error interno del servidor")]
-        public async Task<ActionResult<IEnumerable<Compra>>> GetCompras([FromQuery] int? idCliente, [FromQuery]  DateOnly? fechaInicio, [FromQuery] DateOnly? fechaFin, [FromQuery] int tipoFecha) // 1 = FechaPresentacion, 2 = FechaEmision
+        public async Task<ActionResult<IEnumerable<ComprasDTO>>> GetCompras([FromQuery] int? idCliente, [FromQuery]  DateOnly? fechaInicio, [FromQuery] DateOnly? fechaFin, [FromQuery] int tipoFecha) // 1 = FechaPresentacion, 2 = FechaEmision
         {
             try
             {
-                var query = contabilidadContext.Compras
-                           .AsQueryable();
+                IQueryable<Compra> query = contabilidadContext.Compras
+                   .Where(a => a.IdCliente == idCliente);
 
-                if (idCliente.HasValue)
+                if (tipoFecha == 1)
                 {
-                    query = query.Where(p => p.IdCliente == idCliente);
+                    query = query.Where(a => a.FechaEmision >= fechaInicio && a.FechaEmision <= fechaFin);
                 }
-
-                // Determinar qué campo de fecha usar según el tipoFecha
-                Expression<Func<Compra, bool>> filtroFecha = _ => true; // Inicialmente sin filtro
-
-                if (fechaInicio.HasValue || fechaFin.HasValue)
+                else if (tipoFecha == 2)
                 {
-                    if (tipoFecha == 1) // FechaPresentacion
-                    {
-                        filtroFecha = c =>
-                            (!fechaInicio.HasValue || c.FechaPresentacion >= fechaInicio.Value) &&
-                            (!fechaFin.HasValue || c.FechaPresentacion <= fechaFin.Value);
-                    }
-                    else if (tipoFecha == 2) // FechaEmision
-                    {
-                        filtroFecha = c =>
-                            (!fechaInicio.HasValue || c.FechaEmision >= fechaInicio.Value) &&
-                            (!fechaFin.HasValue || c.FechaEmision <= fechaFin.Value);
-                    }
-
-                    query = query.Where(filtroFecha);
+                    query = query.Where(a => a.FechaPresentacion >= fechaInicio && a.FechaPresentacion <= fechaFin);
                 }
-
+                else
+                {
+                    return BadRequest("El valor de tipoFecha no es válido. Debe ser 1 o 2.");
+                }
 
                 var compras = await query.Select(c => new
                 {
@@ -103,6 +81,7 @@ namespace ApiContabsv.Controllers
                     RazonProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NombreRazonSocial : null,
                     NombreProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Nombres : null,
                     ApellidopProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Apellidos : null,
+                    NombreComercial = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NombreComercial : null,
                     NitProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NitProveedor : null,
                     NRCProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Nrc : null,
                     CodigoClasificacion = c.IdClasificacionNavigation != null ? c.IdClasificacionNavigation.Codigo : null,
@@ -114,7 +93,7 @@ namespace ApiContabsv.Controllers
                     DescripcionTipOperacion = c.IdTipoOperacionNavigation != null ? c.IdTipoOperacionNavigation.SectorP : null,
                     CodigoOperacion = c.IdTipoOperacionNavigation != null ? c.IdTipoOperacionNavigation.Codigo : null,
                     DescripcionOperacion = c.IdTipoOperacionNavigation != null ? c.IdTipoOperacionNavigation.Descripcion : null,
-                    CodigoTipoCostofasto = c.IdTipoCostoGastoNavigation != null ? c.IdTipoCostoGastoNavigation.Codigo : null,
+                    CodigoTipoCostoGasto = c.IdTipoCostoGastoNavigation != null ? c.IdTipoCostoGastoNavigation.Codigo : null,
                     DescripcionCostoGasto = c.IdTipoCostoGastoNavigation != null ? c.IdTipoCostoGastoNavigation.Descripcion : null
                 })
                 .ToListAsync();
@@ -127,9 +106,17 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 OBTENER UNA COMPRA POR ID CON SUS RELACIONES
+
         [HttpGet("Compras/{id}")]
-        public async Task<ActionResult<Compra>> GetCompra(int id)
+        [SwaggerOperation(
+         Summary = "CONSULTA UNA COMPRA ",
+         Description = "Este endpoint permite consultar una compra enviando su IdCompra."
+        )]
+        [SwaggerResponse(200, "Consulta exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
+        [SwaggerResponse(404, "Datos no encontrado")]
+        [SwaggerResponse(500, "Error interno del servidor")]
+        public async Task<ActionResult<ComprasDTO>> GetCompra(int id)
         {
             try
             {
@@ -175,6 +162,7 @@ namespace ApiContabsv.Controllers
                     RazonProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NombreRazonSocial : null,
                     NombreProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Nombres : null,
                     ApellidopProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Apellidos : null,
+                    NombreComercial = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NombreComercial : null,
                     NitProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NitProveedor : null,
                     NRCProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Nrc : null,
                     CodigoClasificacion = c.IdClasificacionNavigation != null ? c.IdClasificacionNavigation.Codigo : null,
@@ -186,7 +174,7 @@ namespace ApiContabsv.Controllers
                     DescripcionTipOperacion = c.IdTipoOperacionNavigation != null ? c.IdTipoOperacionNavigation.SectorP : null,
                     CodigoOperacion = c.IdTipoOperacionNavigation != null ? c.IdTipoOperacionNavigation.Codigo : null,
                     DescripcionOperacion = c.IdTipoOperacionNavigation != null ? c.IdTipoOperacionNavigation.Descripcion : null,
-                    CodigoTipoCostofasto = c.IdTipoCostoGastoNavigation != null ? c.IdTipoCostoGastoNavigation.Codigo : null,
+                    CodigoTipoCostoGasto = c.IdTipoCostoGastoNavigation != null ? c.IdTipoCostoGastoNavigation.Codigo : null,
                     DescripcionCostoGasto = c.IdTipoCostoGastoNavigation != null ? c.IdTipoCostoGastoNavigation.Descripcion : null
                 };
 
@@ -198,17 +186,55 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 CREAR UNA NUEVA COMPRA
         [HttpPost("Compras")]
-        public async Task<ActionResult<Compra>> CreateCompra(Compra compra)
+        [SwaggerOperation(
+         Summary = "CREAR UNA COMPRA",
+         Description = "Este endpoint permite crear una compra."
+        )]
+        [SwaggerResponse(200, "Creacion Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
+        [SwaggerResponse(404, "Datos no encontrado")]
+        [SwaggerResponse(500, "Error interno del servidor")]
+        public async Task<ActionResult<CreateComprasDTO>> CreateCompra(CreateComprasDTO add)
         {
             try
             {
-                compra.FechaCreacion = DateTime.Now;
-                contabilidadContext.Compras.Add(compra);
+                var c = new Compra
+                {
+                    FechaCreacion = DateTime.Now,
+                    FechaEmision = add.FechaEmision,
+                    FechaPresentacion = add.FechaPresentacion,
+                    IdclaseDocumento = add.IdClaseDocumento,
+                    IdtipoDocumento = add.IdTipoDocumento,
+                    NumeroDocumento = add.NumeroDocumento,
+                    InternasExentas = add.InternasExentas,
+                    InternacionalesExentasYONsujetas = add.InternacionalesExentasYONsujetas,
+                    ImportacionesYONsujetas = add.ImportacionesYONsujetas,
+                    InternasGravadas = add.InternasGravadas,
+                    InternacionesGravadasBienes = add.InternacionesGravadasBienes,
+                    ImportacionesGravadasBienes = add.ImportacionesGravadasBienes,
+                    ImportacionesGravadasServicios = add.ImportacionesGravadasServicios,
+                    CreditoFiscal = add.CreditoFiscal,
+                    TotalCompras = add.TotalCompras,   
+                    IdTipoOperacion = add.IdTipoOperacion,
+                    IdClasificacion = add.IdClasificacion,
+                    IdTipoCostoGasto = add.IdTipoCostoGasto,
+                    IdSector = add.IdSector,
+                    NumeroAnexo = add.NumeroAnexo,
+                    Posteado = false,
+                    Anulado = false,    
+                    Eliminado = false,  
+                    IdCliente = add.IdCliente,
+                    Combustible = add.Combustible,  
+                    NumSerie = add.NumSerie,    
+                    IvaRetenido = add.IvaRetenido,
+                    IdProveedor = add.IdProveedor
+                };
+
+                contabilidadContext.Compras.Add(c);
                 await contabilidadContext.SaveChangesAsync();
 
-                return CreatedAtAction(nameof(GetCompra), new { id = compra.IdDocCompra }, compra);
+                return CreatedAtAction(nameof(GetCompra), new { id = c.IdDocCompra }, c);
             }
             catch (Exception ex)
             {
@@ -217,9 +243,17 @@ namespace ApiContabsv.Controllers
         }
 
 
-        // 🔵 ACTUALIZAR UNA COMPRA
+       
         [HttpPut("Compras")]
-        public async Task<IActionResult> UpdateCompra(Compra c)
+        [SwaggerOperation(
+         Summary = "MODIFICA UNA COMPRA",
+         Description = "Este endpoint permite modificar una compra mediante su id."
+        )]
+        [SwaggerResponse(200, "Creacion Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
+        [SwaggerResponse(404, "Datos no encontrado")]
+        [SwaggerResponse(500, "Error interno del servidor")]
+        public async Task<IActionResult> UpdateCompra(UpdateComprasDTO c)
         {
             if (c.IdDocCompra == 0)
             {
@@ -236,8 +270,8 @@ namespace ApiContabsv.Controllers
                 }
                 cp.FechaEmision = c.FechaEmision;
                 cp.FechaPresentacion = c.FechaPresentacion;
-                cp.IdclaseDocumento = c.IdclaseDocumento;
-                cp.IdtipoDocumento = c.IdtipoDocumento;
+                cp.IdclaseDocumento = c.IdClaseDocumento;
+                cp.IdtipoDocumento = c.IdTipoDocumento;
                 cp.NumeroDocumento = c.NumeroDocumento;
                 cp.InternasExentas = c.InternasExentas;
                 cp.InternacionalesExentasYONsujetas = c.InternacionalesExentasYONsujetas;
@@ -274,8 +308,16 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 ELIMINAR UNA COMPRA
+
         [HttpDelete("Compras/{id}")]
+        [SwaggerOperation(
+         Summary = "ELIMINA UNA COMPRA",
+         Description = "Este endpoint permite eliminar un compra en caso sea necesario."
+        )]
+        [SwaggerResponse(200, "Creacion Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
+        [SwaggerResponse(404, "Datos no encontrado")]
+        [SwaggerResponse(500, "Error interno del servidor")]
         public async Task<IActionResult> DeleteCompra(int id)
         {
             try

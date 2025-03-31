@@ -176,3 +176,4 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\runtimes\
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\ApiContabsv.sourcelink.json

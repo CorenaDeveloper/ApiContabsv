@@ -39,6 +39,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[Resolucion]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[Sector]",
          "ObjectType": 0
       },

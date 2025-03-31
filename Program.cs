@@ -3,7 +3,9 @@ using ApiContabsv.Models.Contabsv;
 using ApiContabsv.Models.Seguridad;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -46,6 +48,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
+    options.EnableAnnotations();
     options.AddSecurityDefinition("X-AUTH-TOKEN", new OpenApiSecurityScheme
     {
         Name = "X-AUTH-TOKEN",
