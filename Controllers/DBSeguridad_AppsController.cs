@@ -103,13 +103,20 @@ namespace ApiContabsv.Controllers
         [HttpDelete("Apps/{id}")]
         public async Task<IActionResult> DeleteApp(int id)
         {
-            var app = await _context.Apps.FindAsync(id);
+            var app = await _context.Apps
+                .Include(a => a.Modulos)
+                .Include(a => a.Rols)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
             if (app == null)
                 return NotFound();
 
-            _context.Apps.Remove(app);
-            await _context.SaveChangesAsync();
 
+            _context.Modulos.RemoveRange(app.Modulos);
+            _context.Rols.RemoveRange(app.Rols);
+            _context.Apps.Remove(app);
+
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 

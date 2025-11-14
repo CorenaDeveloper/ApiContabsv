@@ -40,15 +40,12 @@ namespace ApiContabsv.DTO.DB_ContabilidadDTO
         [SwaggerSchema(Description = "Número de celular del cliente o proveedor")]
         public string? Celular { get; set; }
 
-        [Required(ErrorMessage = "El campo 'NRC' es obligatorio.")]
-
         [SwaggerSchema(Description = "Número de Registro de Contribuyente (NRC)")]
         public string? Nrc { get; set; }
 
         [SwaggerSchema(Description = "Número de Identificación Tributaria (NIT) del proveedor")]
         public string? NitProveedor { get; set; }
 
-        [Required(ErrorMessage = "El campo ID cliente es obligatorio.")]
         [SwaggerSchema(Description = "ID del cliente")]
         public int IdCliente { get; set; }
 

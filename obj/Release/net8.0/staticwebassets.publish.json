@@ -1,11 +1,1 @@
-{
-  "Version": 1,
-  "Hash": "+ZTHOR32ch2YrN2r5LNEHqxwdkO7m00KITdsNUrpZ7E=",
-  "Source": "ApiContabsv",
-  "BasePath": "_content/ApiContabsv",
-  "Mode": "Default",
-  "ManifestType": "Publish",
-  "ReferencedProjectsConfiguration": [],
-  "DiscoveryPatterns": [],
-  "Assets": []
-}
+{"Version":1,"Hash":"AbnPGA1OuNExxraB+fyC2OpTPKIx/vXlgrg6SL1EQIo=","Source":"ApiContabsv","BasePath":"/","Mode":"Root","ManifestType":"Publish","ReferencedProjectsConfiguration":[],"DiscoveryPatterns":[],"Assets":[],"Endpoints":[]}

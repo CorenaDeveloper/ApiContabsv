@@ -7,6 +7,7 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Ou
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\ApiContabsv.pdb
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Azure.Core.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Azure.Identity.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\CloudinaryDotNet.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.Practices.ServiceLocation.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.Bcl.AsyncInterfaces.dll
@@ -36,6 +37,7 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Ou
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.OpenApi.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.SqlServer.Server.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.Win32.SystemEvents.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Newtonsoft.Json.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Scrutor.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.Annotations.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.Filters.dll

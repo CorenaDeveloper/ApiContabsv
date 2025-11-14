@@ -37,6 +37,18 @@ public partial class ClientexClt
 
     public int? IdCliente { get; set; }
 
+    public string Direccion { get; set; }
+
+    public string Email { get; set; }
+
+    public int? IdActividadEconomica { get; set; }
+
+    public int? IdDepartamento { get; set; }
+
+    public int? IdMunicipio { get; set; }
+
+    public virtual ICollection<Venta> Venta { get; set; } = new List<Venta>();
+
     public virtual ICollection<VentaConsumidor> VentaConsumidors { get; set; } = new List<VentaConsumidor>();
 
     public virtual ICollection<VentaContribuyente> VentaContribuyentes { get; set; } = new List<VentaContribuyente>();

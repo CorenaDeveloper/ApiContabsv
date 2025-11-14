@@ -40,4 +40,32 @@ public partial class Cliente
     public string Direccion { get; set; }
 
     public string Correo { get; set; }
+
+    public string Imagen { get; set; }
+
+    public string TipoContribuyente { get; set; }
+
+    public int? IdActividadEconomica { get; set; }
+
+    public int? IdDepartamento { get; set; }
+
+    public int? IdMunicipio { get; set; }
+
+    public string ApiKey { get; set; }
+
+    public string ApiSecret { get; set; }
+
+    public string UserHacienda { get; set; }
+
+    public string PassHacienda { get; set; }
+
+    public string Token { get; set; }
+
+    public bool? IsDeclarante { get; set; }
+
+    public bool? IsDte { get; set; }
+
+    public DateTime? FechaRegistro { get; set; }
+
+    public string EstadoCliente { get; set; }
 }

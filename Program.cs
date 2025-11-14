@@ -10,7 +10,9 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configurar la conexi�n a la base de datos
+// ============================================
+// CONFIGURACIÓN DE CONEXIONES A BASES DE DATOS
+// ============================================
 var connectionString = builder.Configuration.GetConnectionString("SeguridadConnection");
 builder.Services.AddDbContext<SeguridadContext>(options =>
     options.UseSqlServer(connectionString));
@@ -18,37 +20,40 @@ builder.Services.AddDbContext<SeguridadContext>(options =>
 var connectionStringContabsv = builder.Configuration.GetConnectionString("ContabsvConnection");
 builder.Services.AddDbContext<ContabsvContext>(options =>
     options.UseSqlServer(connectionStringContabsv));
-    
+
 var connectionStringContabilidad = builder.Configuration.GetConnectionString("ContabilidadConnection");
 builder.Services.AddDbContext<ContabilidadContext>(options =>
     options.UseSqlServer(connectionStringContabilidad));
 
-
-// Configurar JSON para ignorar referencias circulares
+// ============================================
+// CONFIGURACIÓN DE SERVICIOS BÁSICOS
+// ============================================
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 });
-
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
         builder =>
         {
-            builder.AllowAnyOrigin()    // Permite cualquier origen
-                   .AllowAnyMethod()    // Permite cualquier método (GET, POST, etc.)
-                   .AllowAnyHeader();   // Permite cualquier encabezado
+            builder.AllowAnyOrigin()
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
         });
 });
 
-
-
-// Configurar Swagger con seguridad y documentación XML
 builder.Services.AddEndpointsApiExplorer();
+
+// ============================================
+// CONFIGURACIÓN DE SWAGGER CON GRUPOS
+// ============================================
 builder.Services.AddSwaggerGen(options =>
 {
     options.EnableAnnotations();
+
+    // Configuración de seguridad con API Key
     options.AddSecurityDefinition("X-AUTH-TOKEN", new OpenApiSecurityScheme
     {
         Name = "X-AUTH-TOKEN",
@@ -73,7 +78,56 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
-    // Intentar cargar la documentación XML (evitar error si no existe)
+    // ⭐ GRUPO 1: CONTABILIDAD
+    options.SwaggerDoc("contabilidad", new OpenApiInfo
+    {
+        Version = "1.0",
+        Title = "CONTABILIDAD APIs",
+        Description = "APIs para el módulo de Contabilidad - Gestión de transacciones, cuentas contables, etc."
+    });
+
+    // ⭐ GRUPO 2: CONTABSV 
+    options.SwaggerDoc("contabsv", new OpenApiInfo
+    {
+        Version = "1.0",
+        Title = "CONTABSV APIs",
+        Description = "APIs para el sistema ContabSV - Gestión de clientes, productos, facturas, etc."
+    });
+
+    // ⭐ GRUPO 3: SEGURIDAD
+    options.SwaggerDoc("seguridad", new OpenApiInfo
+    {
+        Version = "1.0",
+        Title = "SEGURIDAD APIs",
+        Description = "APIs para el módulo de Seguridad - Usuarios, permisos, autenticación, etc."
+    });
+
+    // ⭐ GRUPO 4: REPORTES
+    options.SwaggerDoc("reportes", new OpenApiInfo
+    {
+        Version = "1.0",
+        Title = "REPORTES APIs",
+        Description = "APIs para generación de reportes y consultas especializadas"
+    });
+
+    // Filtro para asignar controladores a grupos según su prefijo
+    options.DocInclusionPredicate((docName, apiDesc) =>
+    {
+        if (apiDesc.RelativePath == null) return false;
+
+        var controllerName = apiDesc.ActionDescriptor.RouteValues["controller"]?.ToLower() ?? "";
+
+        return docName.ToLower() switch
+        {
+            "contabilidad" => controllerName.StartsWith("dbcontabilidad_"),
+            "contabsv" => controllerName.StartsWith("dbcontabsv_"),
+            "seguridad" => controllerName.StartsWith("dbseguridad_"),
+            "reportes" => controllerName.StartsWith("reportes_"),
+            _ => false
+        };
+    });
+
+    // Documentación XML (si existe)
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     if (File.Exists(xmlPath))
@@ -82,23 +136,44 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
-
 var app = builder.Build();
 
-// Middleware de enrutamiento (NECESARIO)
+// ============================================
+// MIDDLEWARE PIPELINE
+// ============================================
 app.UseRouting();
 
-// Habilitar Swagger en todos los entornos
+// ============================================
+// CONFIGURACIÓN DE SWAGGER UI CON GRUPOS
+// ============================================
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(c =>
+{
+    // Grupo Contabilidad
+    c.SwaggerEndpoint("/swagger/contabilidad/swagger.json", "📊 CONTABILIDAD APIs");
 
-// Aplicar política de CORS
+    // Grupo ContabSV
+    c.SwaggerEndpoint("/swagger/contabsv/swagger.json", "💼 CONTABSV APIs");
+
+    // Grupo Seguridad  
+    c.SwaggerEndpoint("/swagger/seguridad/swagger.json", "🔒 SEGURIDAD APIs");
+
+    // Grupo Reportes
+    c.SwaggerEndpoint("/swagger/reportes/swagger.json", "📈 REPORTES APIs");
+
+    c.RoutePrefix = string.Empty;
+    c.DocumentTitle = "ContabSV API Documentation";
+    c.DefaultModelsExpandDepth(-1); // Colapsar modelos por defecto
+});
+
+// ============================================
+// OTROS MIDDLEWARES
+// ============================================
 app.UseCors("AllowAll");
-
 app.UseHttpsRedirection();
 app.UseAuthorization();
 
-// Middleware de autenticación con API Key (DEBE IR DESPUÉS de UseAuthorization)
+// Middleware de autenticación con API Key
 app.Use(async (context, next) =>
 {
     var config = context.RequestServices.GetRequiredService<IConfiguration>();
@@ -106,7 +181,7 @@ app.Use(async (context, next) =>
 
     if (!context.Request.Headers.TryGetValue("X-AUTH-TOKEN", out var providedKey) || providedKey != apiKey)
     {
-        context.Response.StatusCode = 401; // Unauthorized
+        context.Response.StatusCode = 401;
         await context.Response.WriteAsync("Unauthorized: Invalid API Key");
         return;
     }
@@ -114,7 +189,5 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Mapear controladores después de configurar middleware
 app.MapControllers();
-
 app.Run();

@@ -1,12 +1,13 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "ContabilidadContext",
+   "ContextClassName": "ContabsvContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
+   "MinimumProductVersion": "2.6.1186",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models\/Contabilidad",
+   "OutputPath": "Models\/Contabsv",
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "ApiContabsv",
    "Schemas": null,
@@ -15,52 +16,64 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[ClaseDocumento]",
+         "Name": "[dbo].[cliente]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Clasificacion]",
+         "Name": "[dbo].[inv_categorias]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[clientexClt]",
+         "Name": "[dbo].[inv_marcas]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Compras]",
+         "Name": "[dbo].[inv_movimientos]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Operaciones]",
+         "Name": "[dbo].[inv_productos]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Proveedores]",
+         "Name": "[dbo].[inv_stock]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Resolucion]",
+         "Name": "[dbo].[inv_tipos_producto]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Sector]",
+         "Name": "[dbo].[UsuariosFirebase]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[TipoDocumento]",
-         "ObjectType": 0
+         "Name": "[dbo].[Crud_ClientexClt]",
+         "ObjectType": 1
       },
       {
-         "Name": "[dbo].[TipoOperacionCG]",
-         "ObjectType": 0
+         "Name": "[dbo].[Crud_DataCliente]",
+         "ObjectType": 1
       },
       {
-         "Name": "[dbo].[VentaConsumidor]",
-         "ObjectType": 0
+         "Name": "[dbo].[Crud_Proveedores]",
+         "ObjectType": 1
       },
       {
-         "Name": "[dbo].[VentaContribuyentes]",
-         "ObjectType": 0
+         "Name": "[dbo].[DataCliente]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[ListaClintesInt]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[ListaProveedores]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[sp_ListarExistencias]",
+         "ObjectType": 1
       }
    ],
    "UiHint": null,

@@ -13,6 +13,10 @@ public partial class ContabilidadContext : DbContext
     {
     }
 
+    public virtual DbSet<ActividadesEconomica> ActividadesEconomicas { get; set; }
+
+    public virtual DbSet<CatTipoItem> CatTipoItems { get; set; }
+
     public virtual DbSet<ClaseDocumento> ClaseDocumentos { get; set; }
 
     public virtual DbSet<Clasificacion> Clasificacions { get; set; }
@@ -20,6 +24,10 @@ public partial class ContabilidadContext : DbContext
     public virtual DbSet<ClientexClt> ClientexClts { get; set; }
 
     public virtual DbSet<Compra> Compras { get; set; }
+
+    public virtual DbSet<Departamento> Departamentos { get; set; }
+
+    public virtual DbSet<Municipio> Municipios { get; set; }
 
     public virtual DbSet<Operacione> Operaciones { get; set; }
 
@@ -33,15 +41,67 @@ public partial class ContabilidadContext : DbContext
 
     public virtual DbSet<TipoOperacionCg> TipoOperacionCgs { get; set; }
 
+    public virtual DbSet<Venta> Ventas { get; set; }
+
     public virtual DbSet<VentaConsumidor> VentaConsumidors { get; set; }
 
     public virtual DbSet<VentaContribuyente> VentaContribuyentes { get; set; }
 
+    public virtual DbSet<VentasDetalle> VentasDetalles { get; set; }
+
+    public virtual DbSet<VwReporteProfit> VwReporteProfits { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<ActividadesEconomica>(entity =>
+        {
+            entity.ToTable("actividades_economicas");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Activa)
+                .HasDefaultValue(true)
+                .HasColumnName("activa");
+            entity.Property(e => e.Categoria)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("categoria");
+            entity.Property(e => e.Codigo)
+                .IsRequired()
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("codigo");
+            entity.Property(e => e.Descripcion)
+                .IsRequired()
+                .HasColumnType("text")
+                .HasColumnName("descripcion");
+            entity.Property(e => e.FechaActualizacion)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_actualizacion");
+            entity.Property(e => e.FechaCreacion)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("fecha_creacion");
+        });
+
+        modelBuilder.Entity<CatTipoItem>(entity =>
+        {
+            entity.HasKey(e => e.IdTipoItem).HasName("PK__cat_tipo__6D945565AB958273");
+
+            entity.ToTable("cat_tipo_item");
+
+            entity.Property(e => e.IdTipoItem)
+                .ValueGeneratedNever()
+                .HasColumnName("idTipoItem");
+            entity.Property(e => e.Descripcion)
+                .IsRequired()
+                .HasMaxLength(150)
+                .HasColumnName("descripcion");
+        });
+
         modelBuilder.Entity<ClaseDocumento>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ClaseDoc__3213E83F70893AD0");
+            entity.HasKey(e => e.Id).HasName("PK__ClaseDoc__3213E83F3AFDB4A0");
 
             entity.ToTable("ClaseDocumento");
 
@@ -58,7 +118,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<Clasificacion>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Clasific__3213E83FAFD53FAB");
+            entity.HasKey(e => e.Id).HasName("PK__Clasific__3213E83F22C62FF7");
 
             entity.ToTable("Clasificacion");
 
@@ -79,7 +139,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<ClientexClt>(entity =>
         {
-            entity.HasKey(e => e.IdClienteClt).HasName("PK__clientex__4C28074A36BDF2C9");
+            entity.HasKey(e => e.IdClienteClt).HasName("PK__clientex__4C28074A12B76B98");
 
             entity.ToTable("clientexClt");
 
@@ -91,13 +151,24 @@ public partial class ContabilidadContext : DbContext
             entity.Property(e => e.Celular)
                 .HasMaxLength(13)
                 .HasColumnName("celular");
+            entity.Property(e => e.Direccion)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("direccion");
             entity.Property(e => e.DuiCliente)
                 .HasMaxLength(10)
                 .HasColumnName("duiCliente");
             entity.Property(e => e.DuiRepresentanteLegal)
                 .HasMaxLength(10)
                 .HasColumnName("duiRepresentanteLegal");
+            entity.Property(e => e.Email)
+                .HasMaxLength(60)
+                .IsUnicode(false)
+                .HasColumnName("email");
+            entity.Property(e => e.IdActividadEconomica).HasColumnName("idActividadEconomica");
             entity.Property(e => e.IdCliente).HasColumnName("idCliente");
+            entity.Property(e => e.IdDepartamento).HasColumnName("idDepartamento");
+            entity.Property(e => e.IdMunicipio).HasColumnName("idMunicipio");
             entity.Property(e => e.NitCliente)
                 .HasMaxLength(20)
                 .IsUnicode(false)
@@ -133,7 +204,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<Compra>(entity =>
         {
-            entity.HasKey(e => e.IdDocCompra).HasName("PK__Compras__BE7B5DF8B77F01DC");
+            entity.HasKey(e => e.IdDocCompra).HasName("PK__Compras__BE7B5DF865E95A97");
 
             entity.Property(e => e.IdDocCompra).HasColumnName("idDocCompra");
             entity.Property(e => e.Anulado).HasColumnName("anulado");
@@ -226,9 +297,43 @@ public partial class ContabilidadContext : DbContext
                 .HasConstraintName("FK_Compras_TipoDocumento");
         });
 
+        modelBuilder.Entity<Departamento>(entity =>
+        {
+            entity.ToTable("departamentos");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Codigodep)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("codigodep");
+            entity.Property(e => e.Nombre)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("nombre");
+        });
+
+        modelBuilder.Entity<Municipio>(entity =>
+        {
+            entity.ToTable("municipios");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Codigo)
+                .IsRequired()
+                .HasMaxLength(2)
+                .IsUnicode(false)
+                .HasColumnName("codigo");
+            entity.Property(e => e.Nombre)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("nombre");
+        });
+
         modelBuilder.Entity<Operacione>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Operacio__3213E83FDE8C1F03");
+            entity.HasKey(e => e.Id).HasName("PK__Operacio__3213E83F89A24AA6");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Codigo)
@@ -247,7 +352,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<Proveedore>(entity =>
         {
-            entity.HasKey(e => e.IdProveedor).HasName("PK__Proveedo__A3FA8E6BB04569A9");
+            entity.HasKey(e => e.IdProveedor).HasName("PK__Proveedo__A3FA8E6BCF1114D5");
 
             entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");
             entity.Property(e => e.Apellidos)
@@ -314,7 +419,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<Resolucion>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Resoluci__3214EC07F356BB61");
+            entity.HasKey(e => e.Id).HasName("PK__Resoluci__3214EC0715F2C21A");
 
             entity.ToTable("Resolucion");
 
@@ -333,7 +438,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<Sector>(entity =>
         {
-            entity.HasKey(e => e.IdSector).HasName("PK__Sector__5D8E1E74B7735F48");
+            entity.HasKey(e => e.IdSector).HasName("PK__Sector__24DC3D6D777D494D");
 
             entity.ToTable("Sector");
 
@@ -350,7 +455,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<TipoDocumento>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TipoDocu__3213E83F7912DCFA");
+            entity.HasKey(e => e.Id).HasName("PK__TipoDocu__3213E83FDF88442B");
 
             entity.ToTable("TipoDocumento");
 
@@ -375,7 +480,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<TipoOperacionCg>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__TipoOper__3213E83F56D25904");
+            entity.HasKey(e => e.Id).HasName("PK__TipoOper__3213E83F5209921E");
 
             entity.ToTable("TipoOperacionCG");
 
@@ -394,9 +499,149 @@ public partial class ContabilidadContext : DbContext
                 .HasColumnName("sectorP");
         });
 
+        modelBuilder.Entity<Venta>(entity =>
+        {
+            entity.HasKey(e => e.IdVenta).HasName("PK__Ventas__077D561421C6BCA5");
+
+            entity.HasIndex(e => e.IdCliente, "IX_Ventas_Cliente");
+
+            entity.HasIndex(e => e.FechaEmision, "IX_Ventas_FechaEmision");
+
+            entity.HasIndex(e => e.NumeroDocumento, "IX_Ventas_NumeroDocumento");
+
+            entity.HasIndex(e => e.TipoVenta, "IX_Ventas_TipoVenta");
+
+            entity.Property(e => e.IdVenta).HasColumnName("idVenta");
+            entity.Property(e => e.Anulado).HasDefaultValue(false);
+            entity.Property(e => e.CodigoGeneracion)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("codigoGeneracion");
+            entity.Property(e => e.CondicionPago)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.ContraEntrega)
+                .HasDefaultValue(false)
+                .HasColumnName("contraEntrega");
+            entity.Property(e => e.CostoEnvio)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("costoEnvio");
+            entity.Property(e => e.DebitoFiscal).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.DebitoFiscalVentasTerceros).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.DireccionEnvio)
+                .HasMaxLength(500)
+                .HasColumnName("direccionEnvio");
+            entity.Property(e => e.Eliminado).HasDefaultValue(false);
+            entity.Property(e => e.EsDte)
+                .HasDefaultValue(false)
+                .HasColumnName("esDTE");
+            entity.Property(e => e.EstadoDte)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("estadoDTE");
+            entity.Property(e => e.EstadoEnvio)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("estadoEnvio");
+            entity.Property(e => e.ExportacionesCentroamerica).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ExportacionesFueraCentroamerica).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.ExportacionesServicio).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.FechaEnvioMh)
+                .HasColumnType("datetime")
+                .HasColumnName("fechaEnvioMH");
+            entity.Property(e => e.FechaRegistro)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("fechaRegistro");
+            entity.Property(e => e.FormaPago)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.IdClaseDocumento).HasColumnName("idClaseDocumento");
+            entity.Property(e => e.IdCliente).HasColumnName("idCliente");
+            entity.Property(e => e.IdClienteCit).HasColumnName("idClienteCIt");
+            entity.Property(e => e.IdOperacion).HasColumnName("idOperacion");
+            entity.Property(e => e.IdTipoDocumento).HasColumnName("idTipoDocumento");
+            entity.Property(e => e.IdTipoOperacionCg).HasColumnName("idTipoOperacionCG");
+            entity.Property(e => e.JsonDte).HasColumnName("jsonDTE");
+            entity.Property(e => e.NumeroControlInterno)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.NumeroDocumento)
+                .HasMaxLength(60)
+                .IsUnicode(false);
+            entity.Property(e => e.NumeroMaquinaRegistradora)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.NumeroResolucion)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(1000)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.PesoTotal)
+                .HasColumnType("decimal(10, 3)")
+                .HasColumnName("pesoTotal");
+            entity.Property(e => e.Posteado).HasDefaultValue(false);
+            entity.Property(e => e.SelloRecepcion)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("selloRecepcion");
+            entity.Property(e => e.SerieDocumento)
+                .HasMaxLength(20)
+                .IsUnicode(false);
+            entity.Property(e => e.TipoEnvio)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("tipoEnvio");
+            entity.Property(e => e.TipoVenta)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("tipoVenta");
+            entity.Property(e => e.TotalVentas).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.UsuarioRegistro)
+                .HasMaxLength(150)
+                .HasColumnName("usuarioRegistro");
+            entity.Property(e => e.VentasExentas).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VentasGravadasLocales).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VentasInternasExentasNoProporcionalidad).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VentasNoSujetas).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VentasTercerosNoDomiciliados).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.VentasZonasFrancasDpa)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("VentasZonasFrancasDPA");
+            entity.Property(e => e.VolumenTotal)
+                .HasColumnType("decimal(10, 3)")
+                .HasColumnName("volumenTotal");
+            entity.Property(e => e.ZonaEnvio)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("zonaEnvio");
+
+            entity.HasOne(d => d.IdClaseDocumentoNavigation).WithMany(p => p.Venta)
+                .HasForeignKey(d => d.IdClaseDocumento)
+                .HasConstraintName("FK_Ventas_ClaseDocumento");
+
+            entity.HasOne(d => d.IdClienteCitNavigation).WithMany(p => p.Venta)
+                .HasForeignKey(d => d.IdClienteCit)
+                .HasConstraintName("FK_Ventas_clientexClt");
+
+            entity.HasOne(d => d.IdOperacionNavigation).WithMany(p => p.Venta)
+                .HasForeignKey(d => d.IdOperacion)
+                .HasConstraintName("FK_Ventas_Operaciones");
+
+            entity.HasOne(d => d.IdTipoDocumentoNavigation).WithMany(p => p.Venta)
+                .HasForeignKey(d => d.IdTipoDocumento)
+                .HasConstraintName("FK_Ventas_TipoDocumento");
+
+            entity.HasOne(d => d.IdTipoOperacionCgNavigation).WithMany(p => p.Venta)
+                .HasForeignKey(d => d.IdTipoOperacionCg)
+                .HasConstraintName("FK_Ventas_TipoOperacionCG");
+        });
+
         modelBuilder.Entity<VentaConsumidor>(entity =>
         {
-            entity.HasKey(e => e.IdVentaConsumidor).HasName("PK__VentaCon__1A5A7335952BEC5A");
+            entity.HasKey(e => e.IdVentaConsumidor).HasName("PK__VentaCon__1A5A733590F01A6A");
 
             entity.ToTable("VentaConsumidor");
 
@@ -462,7 +707,7 @@ public partial class ContabilidadContext : DbContext
 
         modelBuilder.Entity<VentaContribuyente>(entity =>
         {
-            entity.HasKey(e => e.IdVentaContribuyentes).HasName("PK__VentaCon__470DBE82C9B2558E");
+            entity.HasKey(e => e.IdVentaContribuyentes).HasName("PK__VentaCon__470DBE82BB7CD936");
 
             entity.Property(e => e.IdVentaContribuyentes).HasColumnName("idVentaContribuyentes");
             entity.Property(e => e.DebitoFiscal).HasColumnType("decimal(18, 2)");
@@ -510,6 +755,169 @@ public partial class ContabilidadContext : DbContext
             entity.HasOne(d => d.IdTipoOperacionCgNavigation).WithMany(p => p.VentaContribuyentes)
                 .HasForeignKey(d => d.IdTipoOperacionCg)
                 .HasConstraintName("FK_VentaContribuyentes_TipoOperacionCG");
+        });
+
+        modelBuilder.Entity<VentasDetalle>(entity =>
+        {
+            entity.HasKey(e => e.IdDetalle).HasName("PK__VentasDe__49CAE2FBA2FA795B");
+
+            entity.ToTable("VentasDetalle");
+
+            entity.HasIndex(e => e.IdProducto, "IX_VentasDetalle_Producto");
+
+            entity.HasIndex(e => e.IdVenta, "IX_VentasDetalle_Venta");
+
+            entity.Property(e => e.IdDetalle).HasColumnName("idDetalle");
+            entity.Property(e => e.Cantidad)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("cantidad");
+            entity.Property(e => e.CodigoProducto)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("codigoProducto");
+            entity.Property(e => e.CostoUnitario)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("costoUnitario");
+            entity.Property(e => e.Descripcion)
+                .IsRequired()
+                .HasMaxLength(500)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.Descuento)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("descuento");
+            entity.Property(e => e.IdProducto).HasColumnName("idProducto");
+            entity.Property(e => e.IdVenta).HasColumnName("idVenta");
+            entity.Property(e => e.IvaRetenido)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("ivaRetenido");
+            entity.Property(e => e.MontoSujetoGrav)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("montoSujetoGrav");
+            entity.Property(e => e.NumeroLinea).HasColumnName("numeroLinea");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.Peso)
+                .HasColumnType("decimal(10, 3)")
+                .HasColumnName("peso");
+            entity.Property(e => e.PrecioUnitario)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("precioUnitario");
+            entity.Property(e => e.Sku)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("sku");
+            entity.Property(e => e.Total)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("total");
+            entity.Property(e => e.UnidadMedida)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("unidadMedida");
+            entity.Property(e => e.VentasExentas)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("ventasExentas");
+            entity.Property(e => e.VentasGravadas)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("ventasGravadas");
+            entity.Property(e => e.VentasNoSujetas)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("ventasNoSujetas");
+            entity.Property(e => e.Volumen)
+                .HasColumnType("decimal(10, 3)")
+                .HasColumnName("volumen");
+
+            entity.HasOne(d => d.IdVentaNavigation).WithMany(p => p.VentasDetalles)
+                .HasForeignKey(d => d.IdVenta)
+                .HasConstraintName("FK_VentasDetalle_Ventas");
+        });
+
+        modelBuilder.Entity<VwReporteProfit>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("vw_ReporteProfit");
+
+            entity.Property(e => e.Año).HasColumnName("año");
+            entity.Property(e => e.Cantidad)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("cantidad");
+            entity.Property(e => e.Categoria)
+                .HasMaxLength(100)
+                .HasColumnName("categoria");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(255)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.DescuentoAplicado)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("descuentoAplicado");
+            entity.Property(e => e.FormaPago)
+                .HasMaxLength(50)
+                .IsUnicode(false);
+            entity.Property(e => e.IdCliente).HasColumnName("idCliente");
+            entity.Property(e => e.IdProducto).HasColumnName("idProducto");
+            entity.Property(e => e.IdVenta).HasColumnName("idVenta");
+            entity.Property(e => e.Marca)
+                .HasMaxLength(100)
+                .HasColumnName("marca");
+            entity.Property(e => e.MargenPorcentaje)
+                .HasColumnType("decimal(38, 15)")
+                .HasColumnName("margenPorcentaje");
+            entity.Property(e => e.Mes).HasColumnName("mes");
+            entity.Property(e => e.NombreCliente)
+                .HasMaxLength(121)
+                .IsUnicode(false)
+                .HasColumnName("nombreCliente");
+            entity.Property(e => e.NombreMes)
+                .HasMaxLength(30)
+                .HasColumnName("nombreMes");
+            entity.Property(e => e.NombreProducto)
+                .HasMaxLength(150)
+                .HasColumnName("nombreProducto");
+            entity.Property(e => e.NumeroDocumento)
+                .HasMaxLength(60)
+                .IsUnicode(false);
+            entity.Property(e => e.ObservacionesVenta)
+                .HasMaxLength(1000)
+                .HasColumnName("observacionesVenta");
+            entity.Property(e => e.Peso)
+                .HasColumnType("decimal(10, 3)")
+                .HasColumnName("peso");
+            entity.Property(e => e.PrecioCompra)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("precioCompra");
+            entity.Property(e => e.PrecioVenta)
+                .HasColumnType("decimal(18, 2)")
+                .HasColumnName("precioVenta");
+            entity.Property(e => e.Profit)
+                .HasColumnType("decimal(30, 4)")
+                .HasColumnName("profit");
+            entity.Property(e => e.Sku)
+                .HasMaxLength(100)
+                .HasColumnName("sku");
+            entity.Property(e => e.TipoItem)
+                .HasMaxLength(150)
+                .HasColumnName("tipoItem");
+            entity.Property(e => e.TipoProducto)
+                .HasMaxLength(50)
+                .HasColumnName("tipoProducto");
+            entity.Property(e => e.TotalCostos)
+                .HasColumnType("decimal(29, 4)")
+                .HasColumnName("totalCostos");
+            entity.Property(e => e.TotalVentas)
+                .HasColumnType("decimal(29, 4)")
+                .HasColumnName("totalVentas");
+            entity.Property(e => e.UnidadMedida)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("unidadMedida");
+            entity.Property(e => e.UsuarioRegistro)
+                .HasMaxLength(150)
+                .HasColumnName("usuarioRegistro");
+            entity.Property(e => e.Volumen)
+                .HasColumnType("decimal(10, 3)")
+                .HasColumnName("volumen");
         });
 
         OnModelCreatingPartial(modelBuilder);

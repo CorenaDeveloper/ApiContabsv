@@ -17,6 +17,8 @@ public partial class TipoOperacionCg
 
     public virtual ICollection<Compra> Compras { get; set; } = new List<Compra>();
 
+    public virtual ICollection<Venta> Venta { get; set; } = new List<Venta>();
+
     public virtual ICollection<VentaConsumidor> VentaConsumidors { get; set; } = new List<VentaConsumidor>();
 
     public virtual ICollection<VentaContribuyente> VentaContribuyentes { get; set; } = new List<VentaContribuyente>();

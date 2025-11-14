@@ -13,6 +13,8 @@ public partial class SeguridadContext : DbContext
     {
     }
 
+    public virtual DbSet<AccionesxModulo> AccionesxModulos { get; set; }
+
     public virtual DbSet<App> Apps { get; set; }
 
     public virtual DbSet<ErrorLog> ErrorLogs { get; set; }
@@ -27,9 +29,28 @@ public partial class SeguridadContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<AccionesxModulo>(entity =>
+        {
+            entity.HasKey(e => e.IdAccion).HasName("PK__Acciones__E0B207A447F1BCFE");
+
+            entity.ToTable("AccionesxModulo");
+
+            entity.Property(e => e.IdAccion).HasColumnName("idAccion");
+            entity.Property(e => e.Descripcion)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("descripcion");
+            entity.Property(e => e.IdModulo).HasColumnName("idModulo");
+            entity.Property(e => e.Nombre)
+                .IsRequired()
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("nombre");
+        });
+
         modelBuilder.Entity<App>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Apps__3213E83F3C3126F8");
+            entity.HasKey(e => e.Id).HasName("PK__Apps__3213E83F0F9CEAF0");
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Detalle)
@@ -60,7 +81,7 @@ public partial class SeguridadContext : DbContext
 
         modelBuilder.Entity<ErrorLog>(entity =>
         {
-            entity.HasKey(e => e.ErrorId).HasName("PK__ErrorLog__358565CAFEB7E67A");
+            entity.HasKey(e => e.ErrorId).HasName("PK__ErrorLog__358565CA8E4CEF82");
 
             entity.ToTable("ErrorLog");
 
@@ -86,7 +107,7 @@ public partial class SeguridadContext : DbContext
 
         modelBuilder.Entity<Modulo>(entity =>
         {
-            entity.HasKey(e => e.IdModulo).HasName("PK__Modulos__3CE613FA1D3002C0");
+            entity.HasKey(e => e.IdModulo).HasName("PK__Modulos__3CE613FA22527244");
 
             entity.Property(e => e.IdModulo).HasColumnName("idModulo");
             entity.Property(e => e.Activo).HasColumnName("activo");
@@ -109,6 +130,7 @@ public partial class SeguridadContext : DbContext
 
             entity.Property(e => e.IdPermiso).HasColumnName("idPermiso");
             entity.Property(e => e.Estado).HasColumnName("estado");
+            entity.Property(e => e.IdAccion).HasColumnName("idAccion");
             entity.Property(e => e.IdModulo).HasColumnName("idModulo");
             entity.Property(e => e.IdRol).HasColumnName("idRol");
 
@@ -144,11 +166,11 @@ public partial class SeguridadContext : DbContext
 
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuarios__5B65BF9730112697");
+            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuarios__5B65BF97C44844F3");
 
-            entity.HasIndex(e => e.Email, "UQ__Usuarios__A9D105348D4E09D8").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Usuarios__A9D1053492D97AC6").IsUnique();
 
-            entity.HasIndex(e => e.Usuario1, "UQ__Usuarios__E3237CF7200D1610").IsUnique();
+            entity.HasIndex(e => e.Usuario1, "UQ__Usuarios__E3237CF70E067843").IsUnique();
 
             entity.Property(e => e.Apellido)
                 .IsRequired()

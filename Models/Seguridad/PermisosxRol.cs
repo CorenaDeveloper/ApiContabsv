@@ -15,6 +15,8 @@ public partial class PermisosxRol
 
     public bool? Estado { get; set; }
 
+    public int? IdAccion { get; set; }
+
     public virtual Modulo IdModuloNavigation { get; set; }
 
     public virtual Rol IdRolNavigation { get; set; }

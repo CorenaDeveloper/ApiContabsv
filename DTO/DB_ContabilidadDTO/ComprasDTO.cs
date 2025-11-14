@@ -20,7 +20,13 @@ namespace ApiContabsv.DTO.DB_ContabilidadDTO
         public int IdClaseDocumento { get; set; }
 
         [SwaggerSchema(Description = "ID del tipo de documento")]
-        public int IdTipoDocumento { get; set; }
+        public int IdTipoDocumento { get; set; }      
+        
+        [SwaggerSchema(Description = "Descripcion de tipo de documento")]
+        public string DescripcionTipoDocumento { get; set; } 
+        
+        [SwaggerSchema(Description = "Codigo de tipo de documento")]
+        public string CodigoTipoDocumento { get; set; }
 
         [SwaggerSchema(Description = "Número del documento")]
         public string NumeroDocumento { get; set; }
@@ -109,6 +115,9 @@ namespace ApiContabsv.DTO.DB_ContabilidadDTO
 
         [SwaggerSchema(Description = "NRC del proveedor")]
         public string NRCProveedor { get; set; }
+
+        [SwaggerSchema(Description = "Identifica si el proveedor es juridico")]
+        public bool Juridico { get; set; }
 
         // Información de clasificación
         [SwaggerSchema(Description = "Código de clasificación")]
@@ -308,6 +317,13 @@ namespace ApiContabsv.DTO.DB_ContabilidadDTO
 
         [SwaggerSchema(Description = "ID del proveedor")]
         public int IdProveedor { get; set; }
+
+    }
+
+    public class PostearComprasDTO
+    {
+        [SwaggerSchema(Description = "Id de la compra")]
+        public List<int> IdsCompra { get; set; }
 
     }
 }

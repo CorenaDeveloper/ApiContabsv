@@ -1,0 +1,14 @@
+# Visual Studio temporary files
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.cache
+
+# Visual Studio Code
+.vscode/
+
+# Archivos de configuración específicos del usuario
+*.userprefs
+*.usertasks

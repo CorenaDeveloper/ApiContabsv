@@ -17,9 +17,13 @@ namespace ApiContabsv.Controllers
 
         // 🔵 LISTAR TODOS LOS PERMISOS POR ROL
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<PermisosxRol>>> GetPermisos()
+        public async Task<ActionResult<IEnumerable<PermisosxRol>>> GetPermisos(int idRol)
         {
-            return await _context.PermisosxRols.ToListAsync();
+            var permisos = await _context.PermisosxRols
+                .Where(p => p.IdRol == idRol)
+                .ToListAsync();
+
+            return permisos;
         }
 
         // 🔵 OBTENER UN PERMISO POR ID
@@ -31,6 +35,24 @@ namespace ApiContabsv.Controllers
                 return NotFound();
 
             return permiso;
+        }
+
+        // 🔵 LISTAR PERMISOS DE MÓDULOS (idAccion = NULL)
+        [HttpGet("modulos")]
+        public async Task<ActionResult<IEnumerable<PermisosxRol>>> GetPermisosModulos(int idRol)
+        {
+            return await _context.PermisosxRols
+                .Where(p => p.IdRol == idRol && p.IdAccion == null)
+                .ToListAsync();
+        }
+
+        // 🔵 LISTAR PERMISOS DE ACCIONES (idAccion != NULL)
+        [HttpGet("acciones")]
+        public async Task<ActionResult<IEnumerable<PermisosxRol>>> GetPermisosAcciones(int idRol)
+        {
+            return await _context.PermisosxRols
+                .Where(p => p.IdRol == idRol && p.IdAccion != null)
+                .ToListAsync();
         }
 
         // 🔵 CREAR UN NUEVO PERMISO

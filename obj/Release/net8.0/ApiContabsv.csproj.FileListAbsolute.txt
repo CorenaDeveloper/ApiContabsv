@@ -149,11 +149,6 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\ApiContab
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\ApiContabsv.RazorAssemblyInfo.cs
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets.build.json
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets.development.json
-C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets\msbuild.ApiContabsv.Microsoft.AspNetCore.StaticWebAssets.props
-C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets\msbuild.build.ApiContabsv.props
-C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets\msbuild.buildMultiTargeting.ApiContabsv.props
-C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets\msbuild.buildTransitive.ApiContabsv.props
-C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets.pack.json
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\scopedcss\bundle\ApiContabsv.styles.css
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\ApiConta.59548CE1.Up2Date
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\ApiContabsv.dll
@@ -177,3 +172,14 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\runtimes\
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\ApiContabsv.sourcelink.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\ApiContabsv.staticwebassets.endpoints.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets.build.json.cache
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets.build.endpoints.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\staticwebassets.upToDateCheck.txt
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\rpswa.dswa.cache.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\rjimswa.dswa.cache.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\rjsmrazor.dswa.cache.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\rjsmcshtml.dswa.cache.json
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\swae.build.ex.cache
+C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\CloudinaryDotNet.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Newtonsoft.Json.dll

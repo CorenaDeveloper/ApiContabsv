@@ -58,6 +58,8 @@ namespace ApiContabsv.Controllers
         {
             try
             {
+                cliente.FechaRegistro = DateTime.Now;
+                cliente.EstadoCliente = "Activo";
                 contabsv_context.Clientes.Add(cliente);
                 await contabsv_context.SaveChangesAsync();
                 return CreatedAtAction(nameof(GetCliente), new { id = cliente.IdCliente }, cliente);
@@ -68,30 +70,63 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // ⚫ ACTUALIZAR CLIENTE (PUT)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="clienteActualizado"></param>
+        /// <returns></returns>
         [HttpPut("Clientes/{id}")]
-        public async Task<IActionResult> PutCliente(int id, Cliente cliente)
+        public async Task<IActionResult> PutCliente(int id, Cliente clienteActualizado)
         {
-            if (id != cliente.IdCliente)
+            if (id != clienteActualizado.IdCliente)
             {
                 return BadRequest("El ID del cliente no coincide.");
             }
+
             try
             {
-                contabsv_context.Entry(cliente).State = EntityState.Modified;
-                await contabsv_context.SaveChangesAsync();
-                return NoContent();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ClienteExists(id))
+                // Obtener el cliente existente
+                var clienteExistente = await contabsv_context.Clientes.FindAsync(id);
+                if (clienteExistente == null)
                 {
                     return NotFound("Cliente no encontrado.");
                 }
-                else
-                {
-                    throw;
-                }
+
+                // Actualizar solo los campos que vienen en el request (no nulls)
+                clienteExistente.Nombres = clienteActualizado.Nombres ?? clienteExistente.Nombres;
+                clienteExistente.Apellidos = clienteActualizado.Apellidos ?? clienteExistente.Apellidos;
+                clienteExistente.PersonaJuridica = clienteActualizado.PersonaJuridica;
+                clienteExistente.NombreRazonSocial = clienteActualizado.NombreRazonSocial ?? clienteExistente.NombreRazonSocial;
+                clienteExistente.NombreComercial = clienteActualizado.NombreComercial ?? clienteExistente.NombreComercial;
+                clienteExistente.DuiCliente = clienteActualizado.DuiCliente ?? clienteExistente.DuiCliente;
+                clienteExistente.RepresentanteLegal = clienteActualizado.RepresentanteLegal ?? clienteExistente.RepresentanteLegal;
+                clienteExistente.DuiRepresentanteLegal = clienteActualizado.DuiRepresentanteLegal ?? clienteExistente.DuiRepresentanteLegal;
+                clienteExistente.TelefonoCliente = clienteActualizado.TelefonoCliente ?? clienteExistente.TelefonoCliente;
+                clienteExistente.Celular = clienteActualizado.Celular ?? clienteExistente.Celular;
+                clienteExistente.Nrc = clienteActualizado.Nrc ?? clienteExistente.Nrc;
+                clienteExistente.NitCliente = clienteActualizado.NitCliente ?? clienteExistente.NitCliente;
+                clienteExistente.Direccion = clienteActualizado.Direccion ?? clienteExistente.Direccion;
+                clienteExistente.Correo = clienteActualizado.Correo ?? clienteExistente.Correo;
+                clienteExistente.TipoContribuyente = clienteActualizado.TipoContribuyente ?? clienteExistente.TipoContribuyente;
+                clienteExistente.IdActividadEconomica = clienteActualizado.IdActividadEconomica ?? clienteExistente.IdActividadEconomica;
+                clienteExistente.IdDepartamento = clienteActualizado.IdDepartamento ?? clienteExistente.IdDepartamento;
+                clienteExistente.IdMunicipio = clienteActualizado.IdMunicipio ?? clienteExistente.IdMunicipio;
+                clienteExistente.ApiKey = clienteActualizado.ApiKey ?? clienteExistente.ApiKey;
+                clienteExistente.ApiSecret = clienteActualizado.ApiSecret ?? clienteExistente.ApiSecret;
+                clienteExistente.UserHacienda = clienteActualizado.UserHacienda ?? clienteExistente.UserHacienda;
+                clienteExistente.PassHacienda = clienteActualizado.PassHacienda ?? clienteExistente.PassHacienda;
+
+                // Campos boolean - actualizar solo si vienen definidos
+                if (clienteActualizado.IsDeclarante != null)
+                    clienteExistente.IsDeclarante = clienteActualizado.IsDeclarante;
+                if (clienteActualizado.IsDte != null)
+                    clienteExistente.IsDte = clienteActualizado.IsDte;
+
+                // NO tocar: Token, FechaRegistro, EstadoCliente
+
+                await contabsv_context.SaveChangesAsync();
+                return NoContent();
             }
             catch (Exception ex)
             {

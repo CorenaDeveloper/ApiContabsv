@@ -14,7 +14,12 @@ namespace ApiContabsv.Controllers
         {
             _context = context;
         }
-        // 🔵 LISTAR CLIENTES FILTRADOS POR IdCliente
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="idCliente"></param>
+        /// <returns></returns>
         [HttpGet("ClientexClts")]
         public async Task<ActionResult<IEnumerable<ClientexClt>>> GetClientexClts([FromQuery] int? idCliente)
         {
@@ -35,7 +40,11 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 OBTENER UN CLIENTE POR ID
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("ClientexClts/{id}")]
         public async Task<ActionResult<ClientexClt>> GetCliente(int id)
         {
@@ -54,7 +63,11 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 CREAR UN NUEVO CLIENTE
+       /// <summary>
+       /// 
+       /// </summary>
+       /// <param name="cliente"></param>
+       /// <returns></returns>
         [HttpPost("ClientexClts")]
         public async Task<ActionResult<ClientexClt>> CreateCliente(ClientexClt cliente)
         {
@@ -71,13 +84,17 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 ACTUALIZAR UN CLIENTE
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         [HttpPut("ClientexClts")]
         public async Task<IActionResult> UpdateCliente(ClientexClt c)
         {
             if (c.IdClienteClt == 0)
             {
-                return BadRequest("El ID del proveedor es inválido.");
+                return BadRequest("El ID del Cliente es inválido.");
             }
 
             try
@@ -86,7 +103,7 @@ namespace ApiContabsv.Controllers
                 var cp = await _context.ClientexClts.FindAsync(c.IdClienteClt);
                 if (cp == null)
                 {
-                    return NotFound("Proveedor no encontrado.");
+                    return NotFound("Cliente no encontrado.");
                 }
 
                 // Actualizar las propiedades permitidas
@@ -103,6 +120,11 @@ namespace ApiContabsv.Controllers
                 cp.Nrc = c.Nrc;
                 cp.NitCliente = c.NitCliente;
                 cp.TipoContribuyente = c.TipoContribuyente;
+                cp.Email = c.Email;
+                cp.Direccion = c.Direccion;
+                cp.IdActividadEconomica = c.IdActividadEconomica;
+                cp.IdDepartamento = c.IdDepartamento;
+                cp.IdMunicipio = c.IdMunicipio;
 
                 // Guardar los cambios en la base de datos
                 await _context.SaveChangesAsync();
@@ -110,7 +132,7 @@ namespace ApiContabsv.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                return StatusCode(500, "Error de concurrencia al actualizar el proveedor.");
+                return StatusCode(500, "Error de concurrencia al actualizar el cliente.");
             }
             catch (Exception ex)
             {
@@ -118,7 +140,11 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // 🔵 ELIMINAR UN CLIENTE
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("ClientexClts/{id}")]
         public async Task<IActionResult> DeleteCliente(int id)
         {
@@ -141,10 +167,7 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        private bool ClienteExists(int id)
-        {
-            return _context.ClientexClts.Any(e => e.IdClienteClt == id);
-        }
+     
     }
 }
 

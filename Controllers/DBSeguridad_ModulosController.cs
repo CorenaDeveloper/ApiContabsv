@@ -78,14 +78,88 @@ namespace ApiContabsv.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteModulo(int id)
         {
-            var modulo = await _context.Modulos.FindAsync(id);
-            if (modulo == null)
-                return NotFound();
+            // Usar una transacción para asegurar que todo se elimine correctamente
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
-            _context.Modulos.Remove(modulo);
-            await _context.SaveChangesAsync();
+            try
+            {
+                var modulo = await _context.Modulos.FindAsync(id);
+                if (modulo == null)
+                    return NotFound(new { message = "Módulo no encontrado" });
 
-            return NoContent();
+                int permisosAccionesEliminados = 0;
+                int accionesEliminadas = 0;
+                int permisosModuloEliminados = 0;
+
+                // 1️⃣ Obtener todas las acciones del módulo
+                var acciones = await _context.AccionesxModulos
+                    .Where(a => a.IdModulo == id)
+                    .ToListAsync();
+
+                // 2️⃣ Eliminar permisos de acciones asociadas
+                if (acciones.Any())
+                {
+                    var idsAcciones = acciones.Select(a => a.IdAccion).ToList();
+
+                    var permisosAcciones = await _context.PermisosxRols
+                        .Where(p => p.IdAccion != null && idsAcciones.Contains(p.IdAccion.Value))
+                        .ToListAsync();
+
+                    if (permisosAcciones.Any())
+                    {
+                        _context.PermisosxRols.RemoveRange(permisosAcciones);
+                        permisosAccionesEliminados = permisosAcciones.Count;
+                        await _context.SaveChangesAsync();
+                    }
+
+                    // 3️⃣ Eliminar las acciones del módulo
+                    _context.AccionesxModulos.RemoveRange(acciones);
+                    accionesEliminadas = acciones.Count;
+                    await _context.SaveChangesAsync();
+                }
+
+                // 4️⃣ Eliminar permisos de módulo
+                var permisosModulo = await _context.PermisosxRols
+                    .Where(p => p.IdModulo == id)
+                    .ToListAsync();
+
+                if (permisosModulo.Any())
+                {
+                    _context.PermisosxRols.RemoveRange(permisosModulo);
+                    permisosModuloEliminados = permisosModulo.Count;
+                    await _context.SaveChangesAsync();
+                }
+
+                // 5️⃣ Finalmente, eliminar el módulo
+                _context.Modulos.Remove(modulo);
+                await _context.SaveChangesAsync();
+
+                // Confirmar la transacción
+                await transaction.CommitAsync();
+
+                return Ok(new
+                {
+                    message = "Módulo eliminado correctamente",
+                    detalles = new
+                    {
+                        permisosAccionesEliminados,
+                        accionesEliminadas,
+                        permisosModuloEliminados
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                // Revertir la transacción en caso de error
+                await transaction.RollbackAsync();
+
+                return StatusCode(500, new
+                {
+                    message = "Error al eliminar el módulo",
+                    error = ex.Message,
+                    innerError = ex.InnerException?.Message
+                });
+            }
         }
 
         private bool ModuloExists(int id)

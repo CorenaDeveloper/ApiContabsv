@@ -1,5 +1,7 @@
 ﻿using ApiContabsv.DTO.DB_ContabilidadDTO;
 using ApiContabsv.Models.Contabilidad;
+using ApiContabsv.Models.Contabsv;
+using ApiContabsv.Models.Seguridad;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
@@ -11,11 +13,12 @@ namespace ApiContabsv.Controllers
     [Route("[Controller]")]
     public class DBContabilidad_ComprasController : ControllerBase
     {
-      private readonly ContabilidadContext contabilidadContext;
-
-        public DBContabilidad_ComprasController(ContabilidadContext contabilidadContext)
+        private readonly ContabilidadContext contabilidadContext;
+        private readonly ContabsvContext contabsv_context;
+        public DBContabilidad_ComprasController(ContabilidadContext contabilidadContext, ContabsvContext contabsv_context)
         {
-            this.contabilidadContext = contabilidadContext;
+            this.contabilidadContext = contabilidadContext; 
+            this.contabsv_context = contabsv_context;
         }
 
         [HttpGet("Compras")]
@@ -47,7 +50,8 @@ namespace ApiContabsv.Controllers
                     return BadRequest("El valor de tipoFecha no es válido. Debe ser 1 o 2.");
                 }
 
-                var compras = await query.Select(c => new
+                var compras = await query                   
+                    .Select(c => new
                 {
                     c.IdDocCompra,
                     c.FechaCreacion,
@@ -55,6 +59,8 @@ namespace ApiContabsv.Controllers
                     c.FechaPresentacion,
                     c.IdclaseDocumento,
                     c.IdtipoDocumento,
+                    DescripcionTipoDocumento = c.IdtipoDocumentoNavigation != null ? c.IdtipoDocumentoNavigation.Nombre : null,
+                    CodigoTipoDocumento = c.IdtipoDocumentoNavigation != null ? c.IdtipoDocumentoNavigation.Codigo : null,
                     c.NumeroDocumento,
                     c.InternasExentas,
                     c.InternacionalesExentasYONsujetas,
@@ -84,6 +90,7 @@ namespace ApiContabsv.Controllers
                     NombreComercial = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NombreComercial : null,
                     NitProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NitProveedor : null,
                     NRCProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Nrc : null,
+                    Juridico = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.PersonaJuridica : null,
                     CodigoClasificacion = c.IdClasificacionNavigation != null ? c.IdClasificacionNavigation.Codigo : null,
                     DescripcionClasificacion = c.IdClasificacionNavigation != null ? c.IdClasificacionNavigation.Descripcion : null,
                     CodigoClaseDocumento = c.IdclaseDocumentoNavigation != null ? c.IdclaseDocumentoNavigation.Codigo : null,
@@ -121,6 +128,13 @@ namespace ApiContabsv.Controllers
             try
             {
                 var c = await contabilidadContext.Compras
+                     .Include(c => c.IdProveedorNavigation)
+                     .Include(c => c.IdClasificacionNavigation)
+                     .Include(c => c.IdclaseDocumentoNavigation)
+                     .Include(c => c.IdSectorNavigation)
+                     .Include(c => c.IdTipoOperacionNavigation)
+                     .Include(c => c.IdTipoCostoGastoNavigation)
+                     .Include(c => c.IdtipoDocumentoNavigation)
                     .FirstOrDefaultAsync(c => c.IdDocCompra == id);
 
                 if (c == null)
@@ -136,6 +150,8 @@ namespace ApiContabsv.Controllers
                     c.FechaPresentacion,
                     c.IdclaseDocumento,
                     c.IdtipoDocumento,
+                    DescripcionTipoDocumento = c.IdtipoDocumentoNavigation != null ? c.IdtipoDocumentoNavigation.Nombre : null,
+                    CodigoTipoDocumento = c.IdtipoDocumentoNavigation != null ? c.IdtipoDocumentoNavigation.Codigo : null,
                     c.NumeroDocumento,
                     c.InternasExentas,
                     c.InternacionalesExentasYONsujetas,
@@ -165,6 +181,7 @@ namespace ApiContabsv.Controllers
                     NombreComercial = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NombreComercial : null,
                     NitProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.NitProveedor : null,
                     NRCProveedor = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.Nrc : null,
+                    Juridico = c.IdProveedorNavigation != null ? c.IdProveedorNavigation.PersonaJuridica : null,
                     CodigoClasificacion = c.IdClasificacionNavigation != null ? c.IdClasificacionNavigation.Codigo : null,
                     DescripcionClasificacion = c.IdClasificacionNavigation != null ? c.IdClasificacionNavigation.Descripcion : null,
                     CodigoClaseDocumento = c.IdclaseDocumentoNavigation != null ? c.IdclaseDocumentoNavigation.Codigo : null,
@@ -308,6 +325,51 @@ namespace ApiContabsv.Controllers
             }
         }
 
+
+        [HttpPut("Compras/Postear")]
+        [SwaggerOperation(
+         Summary = "POSTEA COMPRAS",
+         Description = "Este endpoint permite posterar una o lista de  mediante su id."
+        )]
+        [SwaggerResponse(200, "Operación Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
+        [SwaggerResponse(404, "Datos no encontrado")]
+        [SwaggerResponse(500, "Error interno del servidor")]
+        public async Task<IActionResult> PostearCompra([FromBody] PostearComprasDTO c)
+        {
+            if (c.IdsCompra == null || !c.IdsCompra.Any())
+            {
+                return BadRequest("Debe proporcionar al menos un ID de compra.");
+            }
+
+            try
+            {
+                var compras = await contabilidadContext.Compras
+                    .Where(x => c.IdsCompra.Contains(x.IdDocCompra))
+                    .ToListAsync();
+
+                if (compras.Count == 0)
+                {
+                    return NotFound("No se encontraron las compras especificadas.");
+                }
+
+                foreach (var compra in compras)
+                {
+                    compra.Posteado = !compra.Posteado;
+                }
+
+                await contabilidadContext.SaveChangesAsync();
+                return Ok("Cambios realizados correctamente.");
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return StatusCode(500, "Error de concurrencia al actualizar los datos.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
 
         [HttpDelete("Compras/{id}")]
         [SwaggerOperation(
