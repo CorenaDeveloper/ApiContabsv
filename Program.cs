@@ -1,6 +1,7 @@
 ﻿using ApiContabsv.Models.Contabilidad;
 using ApiContabsv.Models.Contabsv;
 using ApiContabsv.Models.Seguridad;
+using ApiContabsv.Models.Dte;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
@@ -24,6 +25,11 @@ builder.Services.AddDbContext<ContabsvContext>(options =>
 var connectionStringContabilidad = builder.Configuration.GetConnectionString("ContabilidadConnection");
 builder.Services.AddDbContext<ContabilidadContext>(options =>
     options.UseSqlServer(connectionStringContabilidad));
+
+
+var connectionStringDte = builder.Configuration.GetConnectionString("DteConnection");
+builder.Services.AddDbContext<dteContext>(options =>
+    options.UseSqlServer(connectionStringDte));
 
 // ============================================
 // CONFIGURACIÓN DE SERVICIOS BÁSICOS
@@ -110,6 +116,14 @@ builder.Services.AddSwaggerGen(options =>
         Description = "APIs para generación de reportes y consultas especializadas"
     });
 
+    // ⭐ GRUPO 5: dte
+    options.SwaggerDoc("dte", new OpenApiInfo
+    {
+        Version = "1.0",
+        Title = "FACTURA ELECTRONICA APIs",
+        Description = "APIs para generación facturación electronica."
+    });
+
     // Filtro para asignar controladores a grupos según su prefijo
     options.DocInclusionPredicate((docName, apiDesc) =>
     {
@@ -123,6 +137,7 @@ builder.Services.AddSwaggerGen(options =>
             "contabsv" => controllerName.StartsWith("dbcontabsv_"),
             "seguridad" => controllerName.StartsWith("dbseguridad_"),
             "reportes" => controllerName.StartsWith("reportes_"),
+            "dte" => controllerName.StartsWith("dbdte_"),
             _ => false
         };
     });
@@ -160,6 +175,9 @@ app.UseSwaggerUI(c =>
 
     // Grupo Reportes
     c.SwaggerEndpoint("/swagger/reportes/swagger.json", "📈 REPORTES APIs");
+
+    // Grupo DTE
+    c.SwaggerEndpoint("/swagger/dte/swagger.json", "💼 DTE APIs");
 
     c.RoutePrefix = string.Empty;
     c.DocumentTitle = "ContabSV API Documentation";
