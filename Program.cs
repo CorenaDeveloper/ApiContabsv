@@ -52,6 +52,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 
+builder.Services.AddHttpClient();
+
 // ============================================
 // CONFIGURACIÓN DE SWAGGER CON GRUPOS
 // ============================================
