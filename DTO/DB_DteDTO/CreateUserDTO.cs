@@ -32,8 +32,8 @@ namespace ApiContabsv.DTO.DB_DteDTO
         /// </summary>
         /// <example>12345678901234</example>
         [Required(ErrorMessage = "El NIT es obligatorio")]
-        [StringLength(17, MinimumLength = 14, ErrorMessage = "El NIT debe tener entre 14 y 17 caracteres")]
-        [RegularExpression(@"^\d{14,17}$", ErrorMessage = "El NIT solo puede contener números")]
+        [StringLength(17, MinimumLength = 4, ErrorMessage = "El NIT o DUI debe tener entre 4 y 17 caracteres")]
+        [RegularExpression(@"^\d{4,17}$", ErrorMessage = "El NIT solo puede contener números")]
         public string Nit { get; set; } = string.Empty;
 
         /// <summary>
