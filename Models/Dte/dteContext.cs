@@ -554,7 +554,14 @@ public partial class dteContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("email");
+            entity.Property(e => e.HaciendaToken)
+                .HasColumnType("text")
+                .HasColumnName("hacienda_token");
             entity.Property(e => e.IsMaster).HasColumnName("is_master");
+            entity.Property(e => e.JwtSecret)
+                .HasMaxLength(255)
+                .IsUnicode(false)
+                .HasColumnName("jwtSecret");
             entity.Property(e => e.Nit)
                 .IsRequired()
                 .HasMaxLength(17)
@@ -579,9 +586,15 @@ public partial class dteContext : DbContext
             entity.Property(e => e.Status)
                 .HasDefaultValue(true)
                 .HasColumnName("status");
+            entity.Property(e => e.TokenExpiresAt)
+                .HasColumnType("datetime")
+                .HasColumnName("token_expires_at");
             entity.Property(e => e.TokenLifetime)
                 .HasDefaultValue(14)
                 .HasColumnName("token_lifetime");
+            entity.Property(e => e.TokenLifetimeDays)
+                .HasDefaultValue(30)
+                .HasColumnName("token_lifetime_days");
             entity.Property(e => e.UpdatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("updated_at");

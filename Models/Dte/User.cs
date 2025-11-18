@@ -45,6 +45,14 @@ public partial class User
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string JwtSecret { get; set; }
+
+    public string HaciendaToken { get; set; }
+
+    public DateTime? TokenExpiresAt { get; set; }
+
+    public int? TokenLifetimeDays { get; set; }
+
     public virtual ICollection<BranchOffice> BranchOffices { get; set; } = new List<BranchOffice>();
 
     public virtual ICollection<ContingencyDocument> ContingencyDocuments { get; set; } = new List<ContingencyDocument>();

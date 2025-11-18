@@ -1,10 +1,8 @@
 ﻿using ApiContabsv.DTO.DB_DteDTO;
 using ApiContabsv.Models.Dte;
 using ApiContabsv.Services;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using System.Text;
 using System.Text.Json;
 
@@ -139,7 +137,7 @@ namespace ApiContabsv.Controllers
                 if (request.SendToHacienda != false) // Por default enviar
                 {
                     transmissionResult = await _haciendaService.TransmitDocument(
-                        signedJWT, user.Nit, dteDocument.ambiente.ToString());
+                        signedJWT, user.Nit, dteDocument.ambiente.ToString(), "01"); // "01" = Factura
 
                     if (transmissionResult.Success)
                     {
@@ -156,24 +154,15 @@ namespace ApiContabsv.Controllers
                     }
                 }
 
-         
                 // 11. RESPUESTA EXITOSA
-                object haciendaInfo;
-                if (transmissionResult != null)
+                var haciendaInfo = new
                 {
-                    haciendaInfo = new
-                    {
-                        sent = true,
-                        success = transmissionResult.Success,
-                        status = transmissionResult.Status,
-                        receptionStamp = transmissionResult.ReceptionStamp,
-                        error = transmissionResult.Error
-                    };
-                }
-                else
-                {
-                    haciendaInfo = new { sent = false };
-                }
+                    sent = transmissionResult != null,
+                    success = transmissionResult?.Success ?? false,
+                    status = transmissionResult?.Status,
+                    receptionStamp = transmissionResult?.ReceptionStamp,
+                    error = transmissionResult?.Error
+                };
 
                 var response = new
                 {
@@ -198,6 +187,7 @@ namespace ApiContabsv.Controllers
                 };
 
                 return Ok(response);
+
             }
             catch (Exception ex)
             {
@@ -225,6 +215,8 @@ namespace ApiContabsv.Controllers
                 });
             }
         }
+
+      
 
         /// <summary>
         /// OBTENER DOCUMENTO POR DTE ID
@@ -284,6 +276,13 @@ namespace ApiContabsv.Controllers
 
                 var httpClient = _httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(30);
+
+                // ✅ USAR JWT_SECRET DEL USUARIO
+                if (!string.IsNullOrEmpty(user.JwtSecret))
+                {
+                    var jwtToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.JwtSecret));
+                    httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {jwtToken}");
+                }
 
                 var jsonContent = JsonSerializer.Serialize(firmingRequest);
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
@@ -455,5 +454,93 @@ namespace ApiContabsv.Controllers
         }
 
         #endregion
+    }
+
+    // DTOs adicionales
+    public class CreateInvoiceRequestDTO
+    {
+        public int ClientId { get; set; }
+        public int UserId { get; set; }
+        public List<InvoiceItemRequestDTO> Items { get; set; } = new();
+        public ReceiverRequestDTO? Receiver { get; set; }
+        public int? ModelType { get; set; }
+        public InvoiceSummaryRequestDTO? Summary { get; set; }
+        public string? CertificatePassword { get; set; }
+        public string? Environment { get; set; } // "00" = pruebas, "01" = producción
+        public bool? SendToHacienda { get; set; } = true;
+
+        public object? ThirdPartySale { get; set; }
+        public object[]? RelatedDocs { get; set; }
+        public object[]? OtherDocs { get; set; }
+        public object[]? Appendixes { get; set; }
+    }
+
+    public class SigningResult
+    {
+        public bool Success { get; set; }
+        public string Response { get; set; } = "";
+        public string? Error { get; set; }
+    }
+
+    // Resto de DTOs existentes...
+    public class InvoiceItemRequestDTO
+    {
+        public int Type { get; set; }
+        public string Description { get; set; } = "";
+        public decimal Quantity { get; set; }
+        public int UnitMeasure { get; set; }
+        public decimal UnitPrice { get; set; }
+        public decimal Discount { get; set; }
+        public string? Code { get; set; }
+        public decimal NonSubjectSale { get; set; }
+        public decimal ExemptSale { get; set; }
+        public decimal TaxedSale { get; set; }
+        public decimal SuggestedPrice { get; set; }
+        public decimal NonTaxed { get; set; }
+        public decimal IvaItem { get; set; }
+    }
+
+    public class ReceiverRequestDTO
+    {
+        public string? DocumentType { get; set; }
+        public string? DocumentNumber { get; set; }
+        public string? Name { get; set; }
+        public AddressRequestDTO? Address { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+    }
+
+    public class AddressRequestDTO
+    {
+        public string Department { get; set; } = "";
+        public string Municipality { get; set; } = "";
+        public string Complement { get; set; } = "";
+    }
+
+    public class InvoiceSummaryRequestDTO
+    {
+        public decimal TotalNonSubject { get; set; }
+        public decimal TotalExempt { get; set; }
+        public decimal TotalTaxed { get; set; }
+        public decimal SubTotal { get; set; }
+        public decimal NonSubjectDiscount { get; set; }
+        public decimal ExemptDiscount { get; set; }
+        public decimal TaxedDiscount { get; set; }
+        public decimal DiscountPercentage { get; set; }
+        public decimal TotalDiscount { get; set; }
+        public decimal SubTotalSales { get; set; }
+        public decimal TotalOperation { get; set; }
+        public decimal TotalNonTaxed { get; set; }
+        public decimal TotalToPay { get; set; }
+        public int OperationCondition { get; set; }
+        public decimal IvaRetention { get; set; }
+        public decimal TotalIva { get; set; }
+        public List<PaymentTypeRequestDTO>? PaymentTypes { get; set; }
+    }
+
+    public class PaymentTypeRequestDTO
+    {
+        public string Code { get; set; } = "";
+        public decimal Amount { get; set; }
     }
 }
