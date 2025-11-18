@@ -1,7 +1,8 @@
 ﻿using ApiContabsv.Models.Contabilidad;
 using ApiContabsv.Models.Contabsv;
-using ApiContabsv.Models.Seguridad;
 using ApiContabsv.Models.Dte;
+using ApiContabsv.Models.Seguridad;
+using ApiContabsv.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
@@ -31,6 +32,8 @@ var connectionStringDte = builder.Configuration.GetConnectionString("DteConnecti
 builder.Services.AddDbContext<dteContext>(options =>
     options.UseSqlServer(connectionStringDte));
 
+builder.Services.AddScoped<IHaciendaService, HaciendaService>();
+builder.Services.AddScoped<IDTEDocumentService, DTEDocumentService>();
 // ============================================
 // CONFIGURACIÓN DE SERVICIOS BÁSICOS
 // ============================================

@@ -1,23 +1,31 @@
 ﻿namespace ApiContabsv.DTO.DB_DteDTO
 {
-    // DTOs EXACTOS COMO GO API
     public class CreateInvoiceRequestDTO
     {
-        public int ClientId { get; set; }  // ✅ ID en tabla users
-        public int UserId { get; set; }    // ✅ Para buscar firmador asignado
+        public int ClientId { get; set; }
+        public int UserId { get; set; }
         public List<InvoiceItemRequestDTO> Items { get; set; } = new();
         public ReceiverRequestDTO? Receiver { get; set; }
         public int? ModelType { get; set; }
         public InvoiceSummaryRequestDTO? Summary { get; set; }
         public string? CertificatePassword { get; set; }
+        public string? Environment { get; set; } // "00" = pruebas, "01" = producción
+        public bool? SendToHacienda { get; set; } = true;
 
-        // Campos opcionales
         public object? ThirdPartySale { get; set; }
         public object[]? RelatedDocs { get; set; }
         public object[]? OtherDocs { get; set; }
         public object[]? Appendixes { get; set; }
     }
 
+    public class SigningResult
+    {
+        public bool Success { get; set; }
+        public string Response { get; set; } = "";
+        public string? Error { get; set; }
+    }
+
+    // Resto de DTOs existentes...
     public class InvoiceItemRequestDTO
     {
         public int Type { get; set; }
