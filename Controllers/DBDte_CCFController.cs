@@ -341,7 +341,7 @@ namespace ApiContabsv.Controllers
                 // ✅ IDENTIFICACION
                 identificacion = new
                 {
-                    version = 1, // CCF usa version 3
+                    version = 2, // CCF usa version 3
                     ambiente = request.Environment ?? "00",
                     tipoDte = "03", // CCF
                     numeroControl = controlNumber,
@@ -362,7 +362,7 @@ namespace ApiContabsv.Controllers
                 receptor = MapCCFReceptor(request.Receiver),
 
                 // ✅ CUERPO DOCUMENTO
-                cuerpoDocumento = MapCCFItems(request.Items),
+                cuerpoDocumento = MapItems(request.Items),
 
                 // ✅ RESUMEN
                 resumen = MapCCFResumen(request.Summary),
@@ -435,13 +435,14 @@ namespace ApiContabsv.Controllers
             };
         }
 
-        private object MapCCFItems(List<CCFItemRequestDTO> items)
+ 
+        private object[] MapItems(List<CCFItemRequestDTO> items)
         {
-            return items.Select((item, index) => new
+            return items.Select((item, index) => new  // ✅ Usar index correcto
             {
-                numItem = index + 1,
+                numItem = index + 1,  // ✅ Índice correcto
                 tipoItem = item.Type,
-                numeroDocumento = item.RelatedDoc,
+                numeroDocumento = (string?)null,
                 codigo = item.Code,
                 codTributo = (string?)null,
                 descripcion = item.Description,
@@ -452,10 +453,9 @@ namespace ApiContabsv.Controllers
                 ventaNoSuj = item.NonSubjectSale,
                 ventaExenta = item.ExemptSale,
                 ventaGravada = item.TaxedSale,
-                tributos = item.Taxes?.ToArray(), // ✅ Usar el array del request
+                tributos = item.Taxes?.ToArray(),  // ✅ Mapear taxes del DTO
                 psv = item.SuggestedPrice,
                 noGravado = item.NonTaxed
-                // ❌ QUITAR: ivaItem = item.IvaItem
             }).ToArray();
         }
 
