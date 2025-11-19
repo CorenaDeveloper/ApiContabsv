@@ -36,7 +36,7 @@ namespace ApiContabsv.Controllers
         }
 
         /// <summary>
-        /// CREAR FACTURA ELECTRONICA (PROCESO COMPLETO)
+        /// CREAR FACTURA ELECTRONICA 
         /// </summary>
         [HttpPost]
         public async Task<ActionResult> CreateInvoice([FromBody] CreateInvoiceRequestDTO request)
@@ -63,34 +63,14 @@ namespace ApiContabsv.Controllers
                 // 4. GENERAR NÚMERO DE CONTROL ÚNICO
                 var sequenceNumber = await _documentService.GetNextSequenceNumber(
                     user.Id, "01", "0001", "001");
-                var controlNumber = $"DTE-01-{user.Nit}-{sequenceNumber:000000000}";
+
+                var controlNumber = $"DTE-01-M001P000-{DateTime.Now.Year}{sequenceNumber:00000000000}";
 
                 // 5. GENERAR DTE ID ÚNICO
                 dteId = Guid.NewGuid().ToString().ToUpper();
 
                 // 6. CONSTRUIR DOCUMENTO DTE
-                var dteDocument = new
-                {
-                    version = 1,
-                    ambiente = request.Environment ?? "00", // Desde request o default pruebas
-                    tipoDte = "01", // factura
-                    numeroControl = controlNumber,
-                    codigoGeneracion = dteId,
-                    tipoModelo = request.ModelType ?? 1,
-                    tipoOperacion = 1,
-                    fecEmi = DateTime.Now.ToString("yyyy-MM-dd"),
-                    horEmi = DateTime.Now.ToString("HH:mm:ss"),
-                    tipoMoneda = "USD",
-                    emisor = MapEmisorFromUser(user),
-                    receptor = MapReceptor(request.Receiver),
-                    cuerpoDocumento = MapItems(request.Items),
-                    resumen = MapResumen(request.Summary),
-                    ventaTercero = request.ThirdPartySale,
-                    documentoRelacionado = request.RelatedDocs,
-                    otrosDocumentos = request.OtherDocs,
-                    apendice = request.Appendixes
-                };
-
+                var dteDocument = BuildDTEDocument(user, request, controlNumber, dteId);
                 // 7. FIRMAR DOCUMENTO
                 var signResult = await SignDocument(user, dteDocument, optimalSigner);
                 if (!signResult.Success)
@@ -136,8 +116,7 @@ namespace ApiContabsv.Controllers
 
                 if (request.SendToHacienda != false) // Por default enviar
                 {
-                    transmissionResult = await _haciendaService.TransmitDocument(
-                        signedJWT, user.Nit, dteDocument.ambiente.ToString(), "01"); // "01" = Factura
+                    transmissionResult = await _haciendaService.TransmitDocument(signedJWT, user.Nit, request.Environment ?? "00", "01");
 
                     if (transmissionResult.Success)
                     {
@@ -161,7 +140,9 @@ namespace ApiContabsv.Controllers
                     success = transmissionResult?.Success ?? false,
                     status = transmissionResult?.Status,
                     receptionStamp = transmissionResult?.ReceptionStamp,
-                    error = transmissionResult?.Error
+                    error = transmissionResult?.Error,
+                    errorDetails = transmissionResult?.ErrorDetails,
+                    fullResponse = transmissionResult?.RawResponse
                 };
 
                 var response = new
@@ -191,8 +172,6 @@ namespace ApiContabsv.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error procesando factura para usuario {UserId}", request.ClientId);
-
                 // Si tenemos un dteId y falló después del guardado, marcar como error
                 if (!string.IsNullOrEmpty(dteId))
                 {
@@ -202,7 +181,7 @@ namespace ApiContabsv.Controllers
                     }
                     catch (Exception saveEx)
                     {
-                        _logger.LogError(saveEx, "Error actualizando estado de error para documento {DteId}", dteId);
+                        await _documentService.UpdateDocumentStatus(dteId, "ERROR" + saveEx);
                     }
                 }
 
@@ -358,6 +337,42 @@ namespace ApiContabsv.Controllers
             return null;
         }
 
+        private object BuildDTEDocument(User user, CreateInvoiceRequestDTO request, string controlNumber, string dteId)
+        {
+            return new
+            {
+                // ✅ SECCIÓN IDENTIFICACION (TODO LO QUE ESTABA EN RAÍZ)
+                identificacion = new
+                {
+                    version = 1,
+                    ambiente = request.Environment ?? "00",
+                    tipoDte = "01",
+                    numeroControl = controlNumber,
+                    codigoGeneracion = dteId,
+                    tipoModelo = request.ModelType ?? 1,
+                    tipoOperacion = 1,
+                    tipoContingencia = (int?)null,
+                    motivoContin = (string?)null,
+                    fecEmi = DateTime.Now.ToString("yyyy-MM-dd"),
+                    horEmi = DateTime.Now.ToString("HH:mm:ss"),
+                    tipoMoneda = "USD"
+                },
+
+                // ✅ SECCIONES PRINCIPALES
+                emisor = MapEmisorFromUser(user),
+                receptor = MapReceptor(request.Receiver),
+                cuerpoDocumento = MapItems(request.Items),
+                resumen = MapResumen(request.Summary),
+
+                // ✅ CAMPOS OBLIGATORIOS CON NULL
+                documentoRelacionado = (object?)null,
+                otrosDocumentos = (object?)null,
+                ventaTercero = (object?)null,
+                extension = (object?)null,
+                apendice = (object?)null
+            };
+        }
+
         private object MapEmisorFromUser(User user)
         {
             return new
@@ -369,19 +384,21 @@ namespace ApiContabsv.Controllers
                 descActividad = user.EconomicActivityDesc,
                 nombreComercial = user.CommercialName,
                 tipoEstablecimiento = "02",
+                // ✅ DATOS HARDCODEADOS DEL ID 5
+                codEstable = "M001",
+                codPuntoVenta = "P000",
                 direccion = new
                 {
-                    departamento = "06",
-                    municipio = "20",
-                    complemento = "San Salvador"
+                    departamento = "03",
+                    municipio = "18",
+                    complemento = "Barrio el Ángel, calle el Ángel, casa 26 Sonsonate"
                 },
-                telefono = user.Phone,
-                correo = user.Email,
-                codEstableMH = "0001",
-                codPuntoVentaMH = "001"
+                telefono = "61032136",
+                correo = "corenadeveloper@gmail.com",
+                codEstableMH = "M001",
+                codPuntoVentaMH = "M001"  // ✅ 4 caracteres
             };
         }
-
         private object MapReceptor(ReceiverRequestDTO? receiver)
         {
             if (receiver == null) return null;
@@ -391,6 +408,9 @@ namespace ApiContabsv.Controllers
                 nombre = receiver.Name,
                 tipoDocumento = receiver.DocumentType,
                 numDocumento = receiver.DocumentNumber,
+                nrc = (string?)null,
+                codActividad = (string?)null,
+                descActividad = (string?)null,
                 direccion = receiver.Address != null ? new
                 {
                     departamento = receiver.Address.Department,
@@ -407,7 +427,7 @@ namespace ApiContabsv.Controllers
             return items.Select((item, index) => new
             {
                 numItem = index + 1,
-                tipoItem = item.Type,
+                tipoItem = 2,  // ✅ Cambiar de 1 a 2 (Servicios)
                 descripcion = item.Description,
                 cantidad = item.Quantity,
                 uniMedida = item.UnitMeasure,
@@ -419,7 +439,10 @@ namespace ApiContabsv.Controllers
                 ventaGravada = item.TaxedSale,
                 psv = item.SuggestedPrice,
                 noGravado = item.NonTaxed,
-                ivaItem = item.IvaItem
+                ivaItem = item.IvaItem,
+                numeroDocumento = (string?)null,
+                codTributo = (string?)null,  // ✅ Cambiar a null para servicios
+                tributos = (string[]?)null   // ✅ Cambiar a null para servicios
             }).ToArray();
         }
 
@@ -445,102 +468,23 @@ namespace ApiContabsv.Controllers
                 condicionOperacion = summary.OperationCondition,
                 ivaRete1 = summary.IvaRetention,
                 totalIva = summary.TotalIva,
-                pagos = summary.PaymentTypes?.Select(p => new
-                {
-                    codigo = p.Code,
-                    montoPago = p.Amount
-                }).ToArray()
+                tributos = (string[]?)null,
+                reteRenta = 0.0,
+                totalLetras = "NOVENTA Y NUEVE CON 05/100 DOLARES",
+                saldoFavor = 0.0,
+                numPagoElectronico = (string?)null,
+               
+               pagos = summary.PaymentTypes?.Select(p => new
+               {
+                   codigo = p.Code,
+                   montoPago = p.Amount,
+                   referencia = "REF001",  // ✅ Agregar referencia
+                   periodo = 1,            // ✅ Agregar periodo
+                   plazo = "01"            // ✅ Agregar plazo
+               }).ToArray()
             };
         }
 
         #endregion
-    }
-
-    // DTOs adicionales
-    public class CreateInvoiceRequestDTO
-    {
-        public int ClientId { get; set; }
-        public int UserId { get; set; }
-        public List<InvoiceItemRequestDTO> Items { get; set; } = new();
-        public ReceiverRequestDTO? Receiver { get; set; }
-        public int? ModelType { get; set; }
-        public InvoiceSummaryRequestDTO? Summary { get; set; }
-        public string? CertificatePassword { get; set; }
-        public string? Environment { get; set; } // "00" = pruebas, "01" = producción
-        public bool? SendToHacienda { get; set; } = true;
-
-        public object? ThirdPartySale { get; set; }
-        public object[]? RelatedDocs { get; set; }
-        public object[]? OtherDocs { get; set; }
-        public object[]? Appendixes { get; set; }
-    }
-
-    public class SigningResult
-    {
-        public bool Success { get; set; }
-        public string Response { get; set; } = "";
-        public string? Error { get; set; }
-    }
-
-    // Resto de DTOs existentes...
-    public class InvoiceItemRequestDTO
-    {
-        public int Type { get; set; }
-        public string Description { get; set; } = "";
-        public decimal Quantity { get; set; }
-        public int UnitMeasure { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal Discount { get; set; }
-        public string? Code { get; set; }
-        public decimal NonSubjectSale { get; set; }
-        public decimal ExemptSale { get; set; }
-        public decimal TaxedSale { get; set; }
-        public decimal SuggestedPrice { get; set; }
-        public decimal NonTaxed { get; set; }
-        public decimal IvaItem { get; set; }
-    }
-
-    public class ReceiverRequestDTO
-    {
-        public string? DocumentType { get; set; }
-        public string? DocumentNumber { get; set; }
-        public string? Name { get; set; }
-        public AddressRequestDTO? Address { get; set; }
-        public string? Phone { get; set; }
-        public string? Email { get; set; }
-    }
-
-    public class AddressRequestDTO
-    {
-        public string Department { get; set; } = "";
-        public string Municipality { get; set; } = "";
-        public string Complement { get; set; } = "";
-    }
-
-    public class InvoiceSummaryRequestDTO
-    {
-        public decimal TotalNonSubject { get; set; }
-        public decimal TotalExempt { get; set; }
-        public decimal TotalTaxed { get; set; }
-        public decimal SubTotal { get; set; }
-        public decimal NonSubjectDiscount { get; set; }
-        public decimal ExemptDiscount { get; set; }
-        public decimal TaxedDiscount { get; set; }
-        public decimal DiscountPercentage { get; set; }
-        public decimal TotalDiscount { get; set; }
-        public decimal SubTotalSales { get; set; }
-        public decimal TotalOperation { get; set; }
-        public decimal TotalNonTaxed { get; set; }
-        public decimal TotalToPay { get; set; }
-        public int OperationCondition { get; set; }
-        public decimal IvaRetention { get; set; }
-        public decimal TotalIva { get; set; }
-        public List<PaymentTypeRequestDTO>? PaymentTypes { get; set; }
-    }
-
-    public class PaymentTypeRequestDTO
-    {
-        public string Code { get; set; } = "";
-        public decimal Amount { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using ApiContabsv.Models.Dte;
+﻿using ApiContabsv.DTO.DB_DteDTO;
+using ApiContabsv.Models.Dte;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 
@@ -66,16 +67,11 @@ namespace ApiContabsv.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                _logger.LogInformation("Documento DTE guardado exitosamente: {DteId} para usuario {UserId}",
-                    request.DteId, request.UserId);
-
                 return dteDetails.Id;
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error guardando documento DTE: {DteId} para usuario {UserId}",
-                    request.DteId, request.UserId);
                 throw;
             }
         }
@@ -89,7 +85,6 @@ namespace ApiContabsv.Services
 
                 if (document == null)
                 {
-                    _logger.LogWarning("No se encontró documento con DTE ID: {DteId}", dteId);
                     return false;
                 }
 
@@ -109,7 +104,6 @@ namespace ApiContabsv.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error actualizando estado del documento: {DteId}", dteId);
                 return false;
             }
         }
@@ -144,7 +138,6 @@ namespace ApiContabsv.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo documento: {DteId}", dteId);
                 return null;
             }
         }
@@ -192,7 +185,6 @@ namespace ApiContabsv.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo documentos del usuario: {UserId}", userId);
                 return new List<DTEDocumentResponse>();
             }
         }
@@ -234,7 +226,6 @@ namespace ApiContabsv.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo secuencia para usuario {UserId}", userId);
                 return 1;
             }
         }
@@ -270,33 +261,4 @@ namespace ApiContabsv.Services
         }
     }
 
-    // DTOs
-    public class SaveDocumentRequest
-    {
-        public string DteId { get; set; } = "";
-        public int UserId { get; set; }
-        public string DocumentType { get; set; } = "";
-        public int GenerationType { get; set; } = 1;
-        public string ControlNumber { get; set; } = "";
-        public decimal TotalAmount { get; set; }
-        public string? Status { get; set; }
-        public string? JsonContent { get; set; }
-        public string? EstablishmentCode { get; set; }
-        public string? PosCode { get; set; }
-    }
-
-    public class DTEDocumentResponse
-    {
-        public int Id { get; set; }
-        public string DteId { get; set; } = "";
-        public int UserId { get; set; }
-        public string UserName { get; set; } = "";
-        public string DocumentType { get; set; } = "";
-        public string Status { get; set; } = "";
-        public string ControlNumber { get; set; } = "";
-        public decimal TotalAmount { get; set; }
-        public string? JsonContent { get; set; }
-        public DateTime? CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-    }
 }
