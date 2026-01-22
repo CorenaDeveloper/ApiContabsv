@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ApiContabsv")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+09702e90bea9c5a94c5344c258dd8a4ebdacb2cc")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+10677688d0fd5190c2ff828e1d81a0619cc52557")]
 [assembly: System.Reflection.AssemblyProductAttribute("ApiContabsv")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ApiContabsv")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -53,6 +53,7 @@ namespace ApiContabsv.Controllers
                     return NotFound(new { message = "Cliente no encontrado" });
                 }
 
+
                 var r = new
                 {
                     u.IdUsuario,
@@ -61,7 +62,8 @@ namespace ApiContabsv.Controllers
                     u.Email,
                     u.Estado,
                     c.IdCliente,
-                    c.PersonaJuridica
+                    c.PersonaJuridica,
+                    c.UserDte
                 };
 
                 return Ok(r);

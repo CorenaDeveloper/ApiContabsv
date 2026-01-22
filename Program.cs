@@ -1,5 +1,6 @@
 ﻿using ApiContabsv.Models.Contabilidad;
 using ApiContabsv.Models.Contabsv;
+using ApiContabsv.Models.Cultivo;
 using ApiContabsv.Models.Dte;
 using ApiContabsv.Models.Seguridad;
 using ApiContabsv.Services;
@@ -26,6 +27,10 @@ builder.Services.AddDbContext<ContabsvContext>(options =>
 var connectionStringContabilidad = builder.Configuration.GetConnectionString("ContabilidadConnection");
 builder.Services.AddDbContext<ContabilidadContext>(options =>
     options.UseSqlServer(connectionStringContabilidad));
+
+var connectionStringCultivo = builder.Configuration.GetConnectionString("DteConnectionCultivo");
+builder.Services.AddDbContext<CultivoContext>(options =>
+    options.UseSqlServer(connectionStringCultivo));
 
 
 var connectionStringDte = builder.Configuration.GetConnectionString("DteConnection");
@@ -121,12 +126,21 @@ builder.Services.AddSwaggerGen(options =>
         Description = "APIs para generación de reportes y consultas especializadas"
     });
 
+
     // ⭐ GRUPO 5: dte
     options.SwaggerDoc("dte", new OpenApiInfo
     {
         Version = "1.0",
         Title = "FACTURA ELECTRONICA APIs",
         Description = "APIs para generación facturación electronica."
+    });
+
+    // ⭐ GRUPO 6: CULTIVO EN CASA
+    options.SwaggerDoc("cultivo", new OpenApiInfo
+    {
+        Version = "1.0",
+        Title = "Cultivo APIs",
+        Description = "APIs para monitoreo de cultivo por medio de placa arduino"
     });
 
     // Filtro para asignar controladores a grupos según su prefijo
@@ -143,6 +157,7 @@ builder.Services.AddSwaggerGen(options =>
             "seguridad" => controllerName.StartsWith("dbseguridad_"),
             "reportes" => controllerName.StartsWith("reportes_"),
             "dte" => controllerName.StartsWith("dbdte_"),
+            "cultivo" => controllerName.StartsWith("dbcultivo_"),
             _ => false
         };
     });
@@ -183,6 +198,9 @@ app.UseSwaggerUI(c =>
 
     // Grupo DTE
     c.SwaggerEndpoint("/swagger/dte/swagger.json", "💼 DTE APIs");
+
+    // Grupo Cultivo
+    c.SwaggerEndpoint("/swagger/cultivo/swagger.json", " Cultivo APIs");
 
     c.RoutePrefix = string.Empty;
     c.DocumentTitle = "ContabSV API Documentation";

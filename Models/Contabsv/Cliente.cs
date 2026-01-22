@@ -68,4 +68,6 @@ public partial class Cliente
     public DateTime? FechaRegistro { get; set; }
 
     public string EstadoCliente { get; set; }
+
+    public int? UserDte { get; set; }
 }

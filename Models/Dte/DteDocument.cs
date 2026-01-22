@@ -23,5 +23,15 @@ public partial class DteDocument
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string ErrorMessage { get; set; }
+
+    public string ErrorDetails { get; set; }
+
+    public string HaciendaResponse { get; set; }
+
+    public string ResponseCode { get; set; }
+
+    public string ReceptionStamp { get; set; }
+
     public virtual User User { get; set; }
 }

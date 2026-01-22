@@ -57,11 +57,10 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType = "01")
+        public async Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType)
         {
             try
             {
-
                 // 1. OBTENER CREDENCIALES DEL USUARIO DESDE BD
                 var user = await GetUserCredentials(userNit);
                 if (user == null || string.IsNullOrEmpty(user.UserHacienda) || string.IsNullOrEmpty(user.PassHacienda))
@@ -87,7 +86,7 @@ namespace ApiContabsv.Services
 
                 // 3. ENVIAR DOCUMENTO FIRMADO A HACIENDA
                 var receptionUrl = GetHaciendaUrl("ReceptionUrl", ambiente);
-  
+
                 if (string.IsNullOrEmpty(receptionUrl))
                 {
                     return new HaciendaTransmissionResult
@@ -115,51 +114,50 @@ namespace ApiContabsv.Services
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 // 5. AGREGAR HEADERS DE AUTORIZACIÓN
-                httpClient.DefaultRequestHeaders.Add("Authorization", token);  // ✅ USAR token, NO authResult.Token
+                httpClient.DefaultRequestHeaders.Add("Authorization", token);
                 httpClient.DefaultRequestHeaders.Add("User-Agent", "API-DTE-SV/1.0");
-
 
                 // 6. ENVIAR A HACIENDA
                 var response = await httpClient.PostAsync(receptionUrl, content);
                 var responseContent = await response.Content.ReadAsStringAsync();
 
-
-                if (response.IsSuccessStatusCode)
+                // Intentar parsear la respuesta JSON independientemente del código HTTP
+                HaciendaResponse? haciendaResponse = null;
+                try
                 {
-
-                    try
-                    {
-                        var haciendaResponse = JsonSerializer.Deserialize<HaciendaResponse>(responseContent);
-
-                        return new HaciendaTransmissionResult
-                        {
-                            Success = true,
-                            Status = haciendaResponse?.Estado ?? "PROCESADO",
-                            ReceptionStamp = haciendaResponse?.SelloRecibido,
-                            ResponseCode = haciendaResponse?.CodigoMsg,
-                            Message = haciendaResponse?.Descripcion,
-                            RawResponse = responseContent
-                        };
-                    }
-                    catch (JsonException jsonEx)
-                    {
-
-                        return new HaciendaTransmissionResult
-                        {
-                            Success = false,
-                            Error = $"Error HTTP {response.StatusCode}",
-                            ErrorDetails = responseContent,  
-                            RawResponse = responseContent
-                        };
-                    }
+                    haciendaResponse = JsonSerializer.Deserialize<HaciendaResponse>(responseContent);
                 }
-                else
+                catch (JsonException)
                 {
+                    // Si no se puede parsear como JSON, es un error de transmisión
+                }
+
+                // LÓGICA CORREGIDA BASADA EN GO:
+                if (haciendaResponse != null && !string.IsNullOrEmpty(haciendaResponse.Estado))
+                {
+                    // Tenemos una respuesta válida de Hacienda, procesarla según el estado
+                    bool isProcessed = haciendaResponse.Estado == "PROCESADO";
+                    bool isRejected = haciendaResponse.Estado == "RECHAZADO";
 
                     return new HaciendaTransmissionResult
                     {
+                        Success = isProcessed, 
+                        Status = haciendaResponse.Estado, 
+                        ReceptionStamp = haciendaResponse.SelloRecibido, 
+                        ResponseCode = haciendaResponse.CodigoMsg, 
+                        Message = haciendaResponse.Descripcion,
+                        Error = isRejected ? $"Documento rechazado por Hacienda: {haciendaResponse.Descripcion}" : null,
+                        ErrorDetails = isRejected ? string.Join("; ", haciendaResponse.Observaciones ?? Array.Empty<string>()) : null,
+                        RawResponse = responseContent
+                    };
+                }
+                else
+                {
+                    return new HaciendaTransmissionResult
+                    {
                         Success = false,
-                        Error = $"Error HTTP {response.StatusCode}",
+                        Status = null, 
+                        Error = response.IsSuccessStatusCode ? "Respuesta inválida de Hacienda" : $"Error HTTP {response.StatusCode}",
                         ErrorDetails = responseContent,
                         RawResponse = responseContent
                     };
@@ -167,7 +165,6 @@ namespace ApiContabsv.Services
             }
             catch (HttpRequestException httpEx)
             {
-               
                 return new HaciendaTransmissionResult
                 {
                     Success = false,
@@ -194,6 +191,7 @@ namespace ApiContabsv.Services
                 };
             }
         }
+
 
         public async Task<HaciendaAuthResult> AuthenticateUser(string userHacienda, string userPassword, string ambiente)
         {
@@ -284,34 +282,34 @@ namespace ApiContabsv.Services
                 if (user == null) return null;
 
                 // 2. VERIFICAR SI TOKEN ESTÁ VIGENTE
-                if (!string.IsNullOrEmpty(user.HaciendaToken) &&
-                    user.TokenExpiresAt.HasValue &&
-                    user.TokenExpiresAt > DateTime.Now)
+                if (!string.IsNullOrEmpty(user.HaciendaToken) &&  user.TokenExpiresAt.HasValue && user.TokenExpiresAt > DateTime.Now)
                 {
                     return user.HaciendaToken;
                 }
 
-                // 3. OBTENER NUEVO TOKEN
-                var authResult = await AuthenticateUser(user.Nit, user.JwtSecret, ambiente);
+                var authResult = await AuthenticateUser(user.Nit, user.JwtSecret, ambiente); 
 
                 if (authResult.Success && !string.IsNullOrEmpty(authResult.Token))
                 {
-                    // 4. GUARDAR NUEVO TOKEN
-                    user.HaciendaToken = authResult.Token;
-                    user.TokenExpiresAt = DateTime.Now.AddDays(user.TokenLifetimeDays ?? 30);
+                    // 4. GUARDAR NUEVO TOKEN CON FORMATO CORRECTO
+                    var tokenToSave = authResult.Token.StartsWith("Bearer ") ?
+                        authResult.Token : $"Bearer {authResult.Token}";
+
+                    user.HaciendaToken = tokenToSave;
+                    user.TokenExpiresAt = DateTime.Now.AddHours(4); // Tokens de MH duran ~4 horas
 
                     await _context.SaveChangesAsync();
-                    return authResult.Token;
+                    return tokenToSave;
                 }
 
                 return null;
             }
             catch (Exception ex)
             {
-
                 return null;
             }
         }
+
     }
 
    

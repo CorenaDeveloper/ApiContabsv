@@ -8,9 +8,9 @@ namespace ApiContabsv.Services
     public interface IDTEDocumentService
     {
         Task<int> SaveDocument(SaveDocumentRequest request);
-        Task<bool> UpdateDocumentStatus(string dteId, string status, string? receptionStamp = null);
+        Task<bool> UpdateDocumentStatus(string dteId, string status, string? receptionStamp = null, string? errorMessage = null, string? errorDetails = null, string? haciendaResponse = null, string? responseCode = null);
         Task<DTEDocumentResponse?> GetDocument(string dteId);
-        Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, int page = 1, int pageSize = 20);
+        Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, int page = 1, int pageSize = 20, DateTime? startDate = null, DateTime? endDate = null);
         Task<int> GetNextSequenceNumber(int userId, string documentType, string establishmentCode, string posCode);
     }
 
@@ -76,7 +76,7 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<bool> UpdateDocumentStatus(string dteId, string status, string? receptionStamp = null)
+        public async Task<bool> UpdateDocumentStatus(string dteId,string status,string? receptionStamp = null,string? errorMessage = null,string? errorDetails = null,string? haciendaResponse = null,string? responseCode = null)
         {
             try
             {
@@ -90,8 +90,12 @@ namespace ApiContabsv.Services
 
                 document.Status = status;
                 document.UpdatedAt = DateTime.Now;
+                document.ReceptionStamp = receptionStamp;
+                document.ErrorMessage = errorMessage;
+                document.ErrorDetails = errorDetails;
+                document.HaciendaResponse = haciendaResponse;
+                document.ResponseCode = responseCode;
 
-                // Si viene sello de recepción, agregarlo al JSON
                 if (!string.IsNullOrEmpty(receptionStamp) && !string.IsNullOrEmpty(document.JsonContent))
                 {
                     var jsonDoc = JsonSerializer.Deserialize<JsonElement>(document.JsonContent);
@@ -142,14 +146,30 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, int page = 1, int pageSize = 20)
+        public async Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, int page = 1, int pageSize = 20, DateTime? startDate = null, DateTime? endDate = null)
         {
             try
             {
                 var skip = (page - 1) * pageSize;
 
-                var documents = await _context.DteDocuments
-                    .Where(d => d.UserId == userId)
+                // Query base
+                var query = _context.DteDocuments
+                    .Where(d => d.UserId == userId);
+
+                // AGREGAR FILTROS POR FECHA
+                if (startDate.HasValue)
+                {
+                    query = query.Where(d => d.CreatedAt >= startDate.Value);
+                }
+
+                if (endDate.HasValue)
+                {
+                    // Agregar un día completo hasta las 23:59:59
+                    var endOfDay = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                    query = query.Where(d => d.CreatedAt <= endOfDay);
+                }
+
+                var documents = await query
                     .OrderByDescending(d => d.CreatedAt)
                     .Skip(skip)
                     .Take(pageSize)
@@ -160,8 +180,15 @@ namespace ApiContabsv.Services
                         UserId = d.UserId,
                         DocumentType = d.DocumentType,
                         Status = d.Status,
+                        JsonContent = d.JsonContent,
                         CreatedAt = d.CreatedAt,
-                        UpdatedAt = d.UpdatedAt
+                        UpdatedAt = d.UpdatedAt,
+                        UserName = d.User.CommercialName,
+                        ErrorDetails = d.ErrorDetails,
+                        ErrorMessage = d.ErrorMessage,
+                        HaciendaResponse = d.HaciendaResponse,
+                        ResponseCode = d.ResponseCode,
+                        ReceptionStamp = d.ReceptionStamp
                     })
                     .ToListAsync();
 

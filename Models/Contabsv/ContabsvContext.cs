@@ -139,6 +139,7 @@ public partial class ContabsvContext : DbContext
                 .HasMaxLength(255)
                 .IsUnicode(false)
                 .HasColumnName("token");
+            entity.Property(e => e.UserDte).HasColumnName("userDTE");
             entity.Property(e => e.UserHacienda)
                 .HasMaxLength(100)
                 .IsUnicode(false)

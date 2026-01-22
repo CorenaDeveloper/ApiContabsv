@@ -343,7 +343,25 @@ public partial class dteContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("dte_id");
+            entity.Property(e => e.ErrorDetails)
+                .HasColumnType("text")
+                .HasColumnName("error_details");
+            entity.Property(e => e.ErrorMessage)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("error_message");
+            entity.Property(e => e.HaciendaResponse)
+                .HasColumnType("text")
+                .HasColumnName("hacienda_response");
             entity.Property(e => e.JsonContent).HasColumnName("json_content");
+            entity.Property(e => e.ReceptionStamp)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("reception_stamp");
+            entity.Property(e => e.ResponseCode)
+                .HasMaxLength(10)
+                .IsUnicode(false)
+                .HasColumnName("response_code");
             entity.Property(e => e.Status)
                 .IsRequired()
                 .HasMaxLength(20)

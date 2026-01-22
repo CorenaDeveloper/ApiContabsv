@@ -71,6 +71,7 @@ namespace ApiContabsv.Controllers
 
                 // 6. CONSTRUIR DOCUMENTO DTE
                 var dteDocument = BuildDTEDocument(user, request, controlNumber, dteId);
+
                 // 7. FIRMAR DOCUMENTO
                 var signResult = await SignDocument(user, dteDocument, optimalSigner);
                 if (!signResult.Success)
@@ -111,40 +112,72 @@ namespace ApiContabsv.Controllers
 
                 var documentId = await _documentService.SaveDocument(saveRequest);
 
-                // 10. ENVIAR A HACIENDA (opcional, puede fallar sin afectar el guardado)
+                // 10. ENVIAR A HACIENDA Y ACTUALIZAR ESTADO CORRECTAMENTE
                 HaciendaTransmissionResult? transmissionResult = null;
+                string finalDocumentStatus = "FIRMADO"; // Estado por defecto si no se envía
 
                 if (request.SendToHacienda != false) // Por default enviar
                 {
                     transmissionResult = await _haciendaService.TransmitDocument(signedJWT, user.Nit, request.Environment ?? "00", "01");
 
-                    if (transmissionResult.Success)
+                    // ✅ LÓGICA CORREGIDA BASADA EN GO:
+                    if (transmissionResult != null)
                     {
-                        // Actualizar estado en BD
+                        string errorMessage = null;
+                        string errorDetails = null;
+                        string responseCode = null;
+
+                        if (transmissionResult.Success)
+                        {
+                            //  Documento procesado exitosamente
+                            finalDocumentStatus = transmissionResult.Status ?? "PROCESADO";
+                        }
+                        else if (transmissionResult.Status == "RECHAZADO")
+                        {
+                            //  Documento rechazado por Hacienda (NO va a contingencia)
+                            finalDocumentStatus = "RECHAZADO";
+                            errorMessage = transmissionResult.Error;
+                            errorDetails = transmissionResult.ErrorDetails;
+                            responseCode = transmissionResult.ResponseCode;
+                        }
+                        else
+                        {
+                            finalDocumentStatus = "ERROR_TRANSMISION";
+                            errorMessage = transmissionResult.Error;
+                            errorDetails = transmissionResult.ErrorDetails;
+
+                        }
+
+                        // Actualizar estado en base de datos CON DETALLES DE ERROR
                         await _documentService.UpdateDocumentStatus(
                             dteId,
-                            transmissionResult.Status ?? "PROCESADO",
-                            transmissionResult.ReceptionStamp);
+                            finalDocumentStatus,
+                            transmissionResult.ReceptionStamp,
+                            errorMessage,
+                            errorDetails,
+                            transmissionResult.RawResponse,
+                            responseCode);
+
+                        _logger.LogInformation($"Documento {dteId} actualizado a estado: {finalDocumentStatus}");
                     }
                     else
                     {
-                        // Log error pero no fallar toda la operación
-                        _logger.LogWarning("Error transmitiendo a Hacienda: {Error}", transmissionResult.Error);
+                        _logger.LogError($"transmissionResult es null para documento {dteId}");
+                        finalDocumentStatus = "ERROR_TRANSMISION";
+
+                        await _documentService.UpdateDocumentStatus(
+                            dteId,
+                            finalDocumentStatus,
+                            null,
+                            "Error interno: transmissionResult es null",
+                            null,
+                            null,
+                            null);
                     }
                 }
+                
 
-                // 11. RESPUESTA EXITOSA
-                var haciendaInfo = new
-                {
-                    sent = transmissionResult != null,
-                    success = transmissionResult?.Success ?? false,
-                    status = transmissionResult?.Status,
-                    receptionStamp = transmissionResult?.ReceptionStamp,
-                    error = transmissionResult?.Error,
-                    errorDetails = transmissionResult?.ErrorDetails,
-                    fullResponse = transmissionResult?.RawResponse
-                };
-
+                // 11. RESPUESTA EXITOSA ESTRUCTURADA
                 var response = new
                 {
                     success = true,
@@ -157,10 +190,20 @@ namespace ApiContabsv.Controllers
                         codigoGeneracion = dteId,
                         signer = optimalSigner.SignerName,
                         signedJWT = signedJWT,
-                        hacienda = haciendaInfo,
+                        hacienda = new
+                        {
+                            sent = transmissionResult != null,
+                            success = transmissionResult?.Success ?? false,
+                            status = transmissionResult?.Status,
+                            receptionStamp = transmissionResult?.ReceptionStamp,
+                            responseCode = transmissionResult?.ResponseCode,
+                            message = transmissionResult?.Message,
+                            error = transmissionResult?.Error,
+                            errorDetails = transmissionResult?.ErrorDetails
+                        },
                         document = new
                         {
-                            status = transmissionResult?.Success == true ? transmissionResult.Status : "FIRMADO",
+                            status = finalDocumentStatus, //  Estado real del documento
                             createdAt = DateTime.Now,
                             totalAmount = saveRequest.TotalAmount
                         }
@@ -181,7 +224,7 @@ namespace ApiContabsv.Controllers
                     }
                     catch (Exception saveEx)
                     {
-                        await _documentService.UpdateDocumentStatus(dteId, "ERROR" + saveEx);
+                        await _documentService.UpdateDocumentStatus(dteId, "ERROR");
                     }
                 }
 
@@ -195,7 +238,7 @@ namespace ApiContabsv.Controllers
             }
         }
 
-      
+
 
         /// <summary>
         /// OBTENER DOCUMENTO POR DTE ID
@@ -222,14 +265,24 @@ namespace ApiContabsv.Controllers
         /// LISTAR DOCUMENTOS DE UN USUARIO
         /// </summary>
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(
-            int userId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? startDate = null, [FromQuery] string? endDate = null)
         {
             try
             {
-                var documents = await _documentService.GetDocumentsByUser(userId, page, pageSize);
+                DateTime? parsedStartDate = null;
+                DateTime? parsedEndDate = null;
+
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    parsedStartDate = start;
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    parsedEndDate = end;
+                }
+
+                var documents = await _documentService.GetDocumentsByUser(userId, page, pageSize, parsedStartDate, parsedEndDate);
                 return Ok(documents);
             }
             catch (Exception ex)
@@ -256,7 +309,7 @@ namespace ApiContabsv.Controllers
                 var httpClient = _httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(30);
 
-                // ✅ USAR JWT_SECRET DEL USUARIO
+                // USAR JWT_SECRET DEL USUARIO
                 if (!string.IsNullOrEmpty(user.JwtSecret))
                 {
                     var jwtToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.JwtSecret));
@@ -341,7 +394,7 @@ namespace ApiContabsv.Controllers
         {
             return new
             {
-                // ✅ SECCIÓN IDENTIFICACION (TODO LO QUE ESTABA EN RAÍZ)
+                //  SECCIÓN IDENTIFICACION (TODO LO QUE ESTABA EN RAÍZ)
                 identificacion = new
                 {
                     version = 1,
@@ -358,13 +411,13 @@ namespace ApiContabsv.Controllers
                     tipoMoneda = "USD"
                 },
 
-                // ✅ SECCIONES PRINCIPALES
+                // SECCIONES PRINCIPALES
                 emisor = MapEmisorFromUser(user),
                 receptor = MapReceptor(request.Receiver),
                 cuerpoDocumento = MapItems(request.Items),
                 resumen = MapResumen(request.Summary),
 
-                // ✅ CAMPOS OBLIGATORIOS CON NULL
+                // CAMPOS OBLIGATORIOS CON NULL
                 documentoRelacionado = (object?)null,
                 otrosDocumentos = (object?)null,
                 ventaTercero = (object?)null,
@@ -384,7 +437,7 @@ namespace ApiContabsv.Controllers
                 descActividad = user.EconomicActivityDesc,
                 nombreComercial = user.CommercialName,
                 tipoEstablecimiento = "02",
-                // ✅ DATOS HARDCODEADOS DEL ID 5
+                // DATOS HARDCODEADOS DEL ID 5
                 codEstable = "M001",
                 codPuntoVenta = "P000",
                 direccion = new
@@ -427,7 +480,7 @@ namespace ApiContabsv.Controllers
             return items.Select((item, index) => new
             {
                 numItem = index + 1,
-                tipoItem = 2,  // ✅ Cambiar de 1 a 2 (Servicios)
+                tipoItem = 2,  // Cambiar de 1 a 2 (Servicios)
                 descripcion = item.Description,
                 cantidad = item.Quantity,
                 uniMedida = item.UnitMeasure,
@@ -441,8 +494,8 @@ namespace ApiContabsv.Controllers
                 noGravado = item.NonTaxed,
                 ivaItem = item.IvaItem,
                 numeroDocumento = (string?)null,
-                codTributo = (string?)null,  // ✅ Cambiar a null para servicios
-                tributos = (string[]?)null   // ✅ Cambiar a null para servicios
+                codTributo = (string?)null,  
+                tributos = (string[]?)null   
             }).ToArray();
         }
 

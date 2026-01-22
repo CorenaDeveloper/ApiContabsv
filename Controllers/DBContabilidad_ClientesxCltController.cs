@@ -32,7 +32,41 @@ namespace ApiContabsv.Controllers
                     query = query.Where(c => c.IdCliente == idCliente);
                 }
 
-                return await query.ToListAsync();
+                var lista = await query
+                    .Select(m => new
+                    {
+                        m.IdCliente,
+                        m.IdClienteClt,
+                        m.Nombres,
+                        m.Apellidos,
+                        m.PersonaJuridica,
+                        m.NombreRazonSocial,
+                        m.NombreComercial,
+                        m.DuiCliente,
+                        m.RepresentanteLegal,
+                        m.DuiRepresentanteLegal,
+                        m.TelefonoCliente,
+                        m.Celular,
+                        m.Nrc,
+                        m.NitCliente,
+                        m.TipoContribuyente,
+                        m.Email,
+                        m.Direccion,
+                        m.IdActividadEconomica,
+                        m.IdDepartamento,
+                        codigoDepartamento = _context.Departamentos
+                            .Where(d => d.Id == m.IdDepartamento)
+                            .Select(d => d.Codigodep)
+                            .FirstOrDefault(),
+                        m.IdMunicipio,
+                        codigoMunicipio = _context.Municipios
+                            .Where(mu => mu.Id == m.IdMunicipio)
+                            .Select(mu => mu.Codigo)
+                            .FirstOrDefault()
+                    })
+                    .ToListAsync();
+
+                return Ok(lista);
             }
             catch (Exception ex)
             {
@@ -55,7 +89,9 @@ namespace ApiContabsv.Controllers
                 {
                     return NotFound("Cliente no encontrado.");
                 }
+
                 return Ok(cliente);
+
             }
             catch (Exception ex)
             {
