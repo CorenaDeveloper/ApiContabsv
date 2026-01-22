@@ -50,6 +50,7 @@ namespace ApiContabsv.Controllers
                 if (user == null)
                     return BadRequest($"Usuario con ID {request.ClientId} no encontrado");
 
+                
                 // 2. OBTENER FIRMADOR ÓPTIMO
                 var optimalSigner = await GetOptimalSignerForUser(request.UserId);
                 if (optimalSigner == null)
@@ -118,7 +119,12 @@ namespace ApiContabsv.Controllers
                 if (request.SendToHacienda != false)
                 {
                     transmissionResult = await _haciendaService.TransmitDocument(
-                        signedJWT, user.Nit, request.Environment ?? "00", "03");
+                        signedJWT, 
+                        user.Nit, 
+                        request.Environment ?? "00", 
+                        "03",
+                        3
+                        );
 
                     if (transmissionResult.Success)
                     {
@@ -338,10 +344,10 @@ namespace ApiContabsv.Controllers
         {
             return new
             {
-                // ✅ IDENTIFICACION
+                //  IDENTIFICACION
                 identificacion = new
                 {
-                    version = 2, // CCF usa version 3
+                    version = 3, 
                     ambiente = request.Environment ?? "00",
                     tipoDte = "03", // CCF
                     numeroControl = controlNumber,
@@ -355,31 +361,31 @@ namespace ApiContabsv.Controllers
                     tipoMoneda = "USD"
                 },
 
-                // ✅ EMISOR
+                //  EMISOR
                 emisor = MapEmisorFromUser(user),
 
-                // ✅ RECEPTOR (con NRC obligatorio)
+                //  RECEPTOR (con NRC obligatorio)
                 receptor = MapCCFReceptor(request.Receiver),
 
-                // ✅ CUERPO DOCUMENTO
+                //  CUERPO DOCUMENTO
                 cuerpoDocumento = MapItems(request.Items),
 
-                // ✅ RESUMEN
+                //  RESUMEN
                 resumen = MapCCFResumen(request.Summary),
 
-                // ✅ DOCUMENTOS RELACIONADOS (opcional)
+                // DOCUMENTOS RELACIONADOS (opcional)
                 documentoRelacionado = request.RelatedDocs != null && request.RelatedDocs.Any()
                     ? MapRelatedDocs(request.RelatedDocs)
                     : null,
 
-                // ✅ VENTA TERCERO (opcional)
+                //  VENTA TERCERO (opcional)
                 ventaTercero = request.ThirdPartySale != null ? new
                 {
                     nit = request.ThirdPartySale.Nit,
                     nombre = request.ThirdPartySale.Name
                 } : null,
 
-                // ✅ CAMPOS OPCIONALES
+                //  CAMPOS OPCIONALES
                 otrosDocumentos = (object?)null,
                 extension = (object?)null,
                 apendice = (object?)null
@@ -396,7 +402,7 @@ namespace ApiContabsv.Controllers
                 codActividad = user.EconomicActivity,
                 descActividad = user.EconomicActivityDesc,
                 nombreComercial = user.CommercialName,
-                tipoEstablecimiento = "02", // Casa Matriz
+                tipoEstablecimiento = "02",
                 codEstable = "M001",
                 codPuntoVenta = "P000",
                 direccion = new
@@ -419,11 +425,11 @@ namespace ApiContabsv.Controllers
             return new
             {
                 nombre = receiver.Name,
-                tipoDocumento = receiver.DocumentType,
-                numDocumento = receiver.DocumentNumber,
-                nrc = receiver.Nrc, // ✅ OBLIGATORIO para CCF
+                nit = receiver.Nit,
+                nrc = receiver.Nrc,
                 codActividad = receiver.ActivityCode,
                 descActividad = receiver.ActivityDescription,
+                nombreComercial = receiver.Name,
                 direccion = receiver.Address != null ? new
                 {
                     departamento = receiver.Address.Department,
@@ -435,12 +441,11 @@ namespace ApiContabsv.Controllers
             };
         }
 
- 
         private object[] MapItems(List<CCFItemRequestDTO> items)
         {
-            return items.Select((item, index) => new  // ✅ Usar index correcto
+            return items.Select((item, index) => new  
             {
-                numItem = index + 1,  // ✅ Índice correcto
+                numItem = index + 1, 
                 tipoItem = item.Type,
                 numeroDocumento = (string?)null,
                 codigo = item.Code,
@@ -453,7 +458,7 @@ namespace ApiContabsv.Controllers
                 ventaNoSuj = item.NonSubjectSale,
                 ventaExenta = item.ExemptSale,
                 ventaGravada = item.TaxedSale,
-                tributos = item.Taxes?.ToArray(),  // ✅ Mapear taxes del DTO
+                tributos = item.Taxes?.ToArray(),  
                 psv = item.SuggestedPrice,
                 noGravado = item.NonTaxed
             }).ToArray();
@@ -474,7 +479,7 @@ namespace ApiContabsv.Controllers
                 descuGravada = summary.TaxedDiscount,
                 porcentajeDescuento = summary.DiscountPercentage,
                 totalDescu = summary.TotalDiscount,
-                // ✅ Mapear el array de taxes del request
+                //  Mapear el array de taxes del request
                 tributos = summary.Taxes?.Select(t => new
                 {
                     codigo = t.Code,

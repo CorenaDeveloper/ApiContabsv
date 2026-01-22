@@ -9,7 +9,7 @@ namespace ApiContabsv.Services
 {
     public interface IHaciendaService
     {
-        Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType = "01");
+        Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType , int version );
         Task<HaciendaAuthResult> AuthenticateUser(string userHacienda, string userPassword, string ambiente);
     }
 
@@ -57,7 +57,7 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType)
+        public async Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType, int version = 1)
         {
             try
             {
@@ -86,7 +86,6 @@ namespace ApiContabsv.Services
 
                 // 3. ENVIAR DOCUMENTO FIRMADO A HACIENDA
                 var receptionUrl = GetHaciendaUrl("ReceptionUrl", ambiente);
-
                 if (string.IsNullOrEmpty(receptionUrl))
                 {
                     return new HaciendaTransmissionResult
@@ -100,17 +99,24 @@ namespace ApiContabsv.Services
                 var httpClient = _httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(30);
 
-                // 4. PREPARAR REQUEST PARA HACIENDA (FORMATO IGUAL A GO)
+                // 4. PREPARAR REQUEST PARA HACIENDA - VERSION VIENE DESDE EL CONTROLADOR
                 var haciendaRequest = new
                 {
                     ambiente = ambiente,
                     idEnvio = 1,
-                    version = 1,
+                    version = version,
                     tipoDte = documentType,
                     documento = signedJWT
                 };
 
-                var jsonContent = JsonSerializer.Serialize(haciendaRequest);
+                var jsonContent = JsonSerializer.Serialize(haciendaRequest, new JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+
+                // *** ÚNICO LOGGING: ESTRUCTURA DEL JSON ***
+                _logger.LogInformation("JSON Request: {JsonContent}", jsonContent);
+
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
                 // 5. AGREGAR HEADERS DE AUTORIZACIÓN
@@ -141,10 +147,10 @@ namespace ApiContabsv.Services
 
                     return new HaciendaTransmissionResult
                     {
-                        Success = isProcessed, 
-                        Status = haciendaResponse.Estado, 
-                        ReceptionStamp = haciendaResponse.SelloRecibido, 
-                        ResponseCode = haciendaResponse.CodigoMsg, 
+                        Success = isProcessed,
+                        Status = haciendaResponse.Estado,
+                        ReceptionStamp = haciendaResponse.SelloRecibido,
+                        ResponseCode = haciendaResponse.CodigoMsg,
                         Message = haciendaResponse.Descripcion,
                         Error = isRejected ? $"Documento rechazado por Hacienda: {haciendaResponse.Descripcion}" : null,
                         ErrorDetails = isRejected ? string.Join("; ", haciendaResponse.Observaciones ?? Array.Empty<string>()) : null,
@@ -156,7 +162,7 @@ namespace ApiContabsv.Services
                     return new HaciendaTransmissionResult
                     {
                         Success = false,
-                        Status = null, 
+                        Status = null,
                         Error = response.IsSuccessStatusCode ? "Respuesta inválida de Hacienda" : $"Error HTTP {response.StatusCode}",
                         ErrorDetails = responseContent,
                         RawResponse = responseContent

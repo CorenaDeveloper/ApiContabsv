@@ -118,7 +118,12 @@ namespace ApiContabsv.Controllers
 
                 if (request.SendToHacienda != false) // Por default enviar
                 {
-                    transmissionResult = await _haciendaService.TransmitDocument(signedJWT, user.Nit, request.Environment ?? "00", "01");
+                    transmissionResult = await _haciendaService.TransmitDocument(signedJWT, 
+                        user.Nit, 
+                        request.Environment ?? "00", 
+                        "01",
+                        1
+                        );
 
                     // ✅ LÓGICA CORREGIDA BASADA EN GO:
                     if (transmissionResult != null)
