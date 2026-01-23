@@ -35,6 +35,27 @@ namespace ApiContabsv.Controllers
             _logger = logger;
         }
 
+
+
+        /// <summary>
+        /// OBTENER DOCUMENTO POR DTE ID
+        /// </summary>
+        [HttpGet("Confirmacion/{dteId}")]
+        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(string dteId)
+        {
+            try
+            {
+                var document = await _documentService.GetDocument(dteId);
+                if (document == null)
+                    return NotFound("Documento no encontrado");
+
+                return Ok(document);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Error interno obteniendo documento");
+            }
+        }
         /// <summary>
         /// INVALIDAR DOCUMENTO DTE
         /// </summary>
@@ -54,55 +75,32 @@ namespace ApiContabsv.Controllers
                 if (user == null)
                     return BadRequest($"Usuario con ID {request.ClienteId} no encontrado");
 
-                // 3. OBTENER FIRMADOR ÓPTIMO
+                // 3. OBTENER FIRMADOR ÓPTIMO (siguiendo tu patrón)
                 var optimalSigner = await GetOptimalSignerForUser(request.UserId);
                 if (optimalSigner == null)
                     return BadRequest("No hay firmadores disponibles para el usuario");
 
-                // 4. VERIFICAR CERTIFICADO
-                var certificatePath = Path.Combine(optimalSigner.CertificatePath, $"{user.Nit}.crt");
-                if (!System.IO.File.Exists(certificatePath))
-                    return BadRequest($"Certificado no encontrado para NIT: {user.Nit}");
-
-                // 5. BUSCAR DOCUMENTO ORIGINAL EN DTE_DOCUMENT
+                // 4. BUSCAR DOCUMENTO ORIGINAL
                 var documento = await _context.DteDocuments
                     .FirstOrDefaultAsync(d => d.DteId == request.GenerationCode);
 
                 if (documento == null)
                     return NotFound("Documento no encontrado");
 
-                // 6. BUSCAR DETALLES EN DTE_DETAILS PARA OBTENER CONTROL_NUMBER
+                // 5. BUSCAR DETALLES PARA CONTROL_NUMBER
                 var detalles = await _context.DteDetails
                     .FirstOrDefaultAsync(d => d.DteId == request.GenerationCode);
 
                 if (detalles == null)
                     return NotFound("Detalles del documento no encontrados");
 
-                // 7. VALIDAR ESTADO DEL DOCUMENTO
-                if (documento.Status == "INVALIDADO")
-                    return BadRequest("Documento ya invalidado");
-
-                if (documento.Status == "RECHAZADO")
-                    return BadRequest("No se puede invalidar un documento rechazado");
-
-                // 8. VALIDACIONES DE TIPO
-                if (!request.Reason.IsValid(out string motivoError))
-                    return BadRequest(motivoError);
-
-                if (request.Reason.Type == 2 && !string.IsNullOrEmpty(request.ReplacementGenerationCode))
-                    return BadRequest("El tipo 2 (anulación) no debe tener código de reemplazo");
-
-                if ((request.Reason.Type == 1 || request.Reason.Type == 3) &&
-                    string.IsNullOrEmpty(request.ReplacementGenerationCode))
-                    return BadRequest("Código de reemplazo requerido para tipos 1 y 3");
-
-                // 9. GENERAR INVALIDACION ID ÚNICO
+                // 6. GENERAR INVALIDACION ID
                 invalidacionId = Guid.NewGuid().ToString().ToUpper();
 
-                // 10. CONSTRUIR DOCUMENTO DE INVALIDACIÓN
-                var invalidacionDocument = BuildInvalidacionDocument(user, request, documento, detalles, invalidacionId);
+                // 7. CONSTRUIR DOCUMENTO DE INVALIDACIÓN
+                var invalidacionDocument = await BuildInvalidacionDocument(user, request, documento, detalles, invalidacionId);
 
-                // 11. FIRMAR DOCUMENTO
+                // 8. FIRMAR DOCUMENTO (usando tu patrón)
                 var signResult = await SignDocument(user, invalidacionDocument, optimalSigner);
                 if (!signResult.Success)
                 {
@@ -114,7 +112,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 12. EXTRAER JWT FIRMADO
+                // 9. EXTRAER JWT FIRMADO
                 var signedJWT = ExtractJWTFromSignerResponse(signResult.Response);
                 if (string.IsNullOrEmpty(signedJWT))
                 {
@@ -125,42 +123,37 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 13. ENVIAR A HACIENDA USANDO NULLIFY URL
-                var transmissionResult = await _haciendaService.TransmitInvalidation(signedJWT,
+                // 10. ENVIAR A HACIENDA (usando tu HaciendaService)
+                var transmissionResult = await _haciendaService.TransmitInvalidation(
+                    signedJWT,
                     user.Nit,
                     request.Environment ?? "00",
                     invalidacionId
                 );
 
-                // 14. PROCESAR RESPUESTA Y ACTUALIZAR BD
-                string finalStatus = "FIRMADO"; // Default si no se envía
+                // 11. PROCESAR RESPUESTA
+                string finalStatus = "FIRMADO";
 
                 if (transmissionResult != null)
                 {
                     if (transmissionResult.Success)
                     {
-                        // Invalidación procesada exitosamente
                         finalStatus = transmissionResult.Status ?? "PROCESADO";
-
-                        // Actualizar documento original a INVALIDADO
                         documento.Status = "INVALIDADO";
                         documento.UpdatedAt = DateTime.Now;
                         await _context.SaveChangesAsync();
                     }
                     else if (transmissionResult.Status == "RECHAZADO")
                     {
-                        // Invalidación rechazada por Hacienda
                         finalStatus = "RECHAZADO";
                     }
                     else
                     {
                         finalStatus = "ERROR_TRANSMISION";
                     }
-
-                    _logger.LogInformation($"Invalidación {invalidacionId} procesada con estado: {finalStatus}");
                 }
 
-                // 15. RESPUESTA EXITOSA ESTRUCTURADA
+                // 12. RESPUESTA
                 var response = new
                 {
                     success = true,
@@ -206,19 +199,18 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        #region Helper Methods
+        #region Helper Methods (igual que Invoice)
 
         private async Task<object> BuildInvalidacionDocument(User user, InvalidacionDocumentoDto request, DteDocument documento, DteDetail detalles, string invalidacionId)
         {
-            // OBTENER DATOS REALES DEL RECEPTOR DEL DOCUMENTO ORIGINAL
+            // OBTENER DATOS REALES DEL RECEPTOR
             var receptorData = await GetOriginalDocumentReceptor(documento.JsonContent);
 
-            // ✅ RETORNAR DIRECTAMENTE EL JSON DE INVALIDACIÓN (SIN WRAPPER)
             return new
             {
                 identificacion = new
                 {
-                    version = 1,
+                    version = 2,
                     ambiente = request.Environment ?? "00",
                     codigoGeneracion = invalidacionId,
                     fecAnula = DateTime.Now.ToString("yyyy-MM-dd"),
@@ -239,12 +231,11 @@ namespace ApiContabsv.Controllers
                 {
                     tipoDte = documento.DocumentType,
                     codigoGeneracion = documento.DteId,
-                    selloRecibido = documento.ReceptionStamp ?? "", // ✅ STRING VACÍO en lugar de null
+                    selloRecibido = documento.ReceptionStamp ?? "",
                     numeroControl = detalles.ControlNumber,
                     fecEmi = documento.CreatedAt?.ToString("yyyy-MM-dd"),
                     montoIva = receptorData.MontoIva,
                     codigoGeneracionR = request.Reason.Type == 2 ? null : request.ReplacementGenerationCode,
-                    // ✅ DATOS REALES DEL RECEPTOR DEL DOCUMENTO ORIGINAL
                     tipoDocumento = receptorData.TipoDocumento,
                     numDocumento = receptorData.NumDocumento,
                     nombre = receptorData.Nombre,
@@ -271,7 +262,6 @@ namespace ApiContabsv.Controllers
             {
                 if (string.IsNullOrEmpty(jsonContent))
                 {
-                    // Valores por defecto si no hay JSON
                     return new ReceptorData
                     {
                         TipoDocumento = "13",
@@ -285,7 +275,6 @@ namespace ApiContabsv.Controllers
 
                 var jsonDoc = JsonDocument.Parse(jsonContent);
 
-                // Extraer datos del receptor
                 string? tipoDocumento = null;
                 string? numDocumento = null;
                 string? nombre = null;
@@ -293,7 +282,6 @@ namespace ApiContabsv.Controllers
                 string? correo = null;
                 decimal montoIva = 0.0m;
 
-                // Buscar receptor
                 if (jsonDoc.RootElement.TryGetProperty("receptor", out var receptor))
                 {
                     if (receptor.TryGetProperty("tipoDocumento", out var tipoDoc))
@@ -312,7 +300,6 @@ namespace ApiContabsv.Controllers
                         correo = correoProp.GetString();
                 }
 
-                // Buscar monto IVA en resumen
                 if (jsonDoc.RootElement.TryGetProperty("resumen", out var resumen))
                 {
                     if (resumen.TryGetProperty("totalIva", out var totalIva))
@@ -336,7 +323,6 @@ namespace ApiContabsv.Controllers
             {
                 _logger.LogError(ex, "Error parseando JSON del documento original");
 
-                // Valores por defecto en caso de error
                 return new ReceptorData
                 {
                     TipoDocumento = "13",
@@ -349,33 +335,21 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        private class ReceptorData
-        {
-            public string TipoDocumento { get; set; } = string.Empty;
-            public string NumDocumento { get; set; } = string.Empty;
-            public string Nombre { get; set; } = string.Empty;
-            public decimal MontoIva { get; set; }
-            public string? Telefono { get; set; }
-            public string? Correo { get; set; }
-        }
-
         private async Task<SigningResult> SignDocument(User user, object invalidacionDocument, SignerResponseDTO signer)
         {
             try
             {
-                // ✅ ENVIAR SOLO EL JSON DE INVALIDACIÓN (IGUAL QUE INVOICE)
                 var firmingRequest = new
                 {
                     nit = user.Nit,
                     activo = true,
                     passwordPri = user.PasswordPri,
-                    dteJson = invalidacionDocument  // ← ESTE ES EL JSON PURO DE INVALIDACIÓN
+                    dteJson = invalidacionDocument
                 };
 
                 var httpClient = _httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(30);
 
-                // USAR JWT_SECRET DEL USUARIO
                 if (!string.IsNullOrEmpty(user.JwtSecret))
                 {
                     var jwtToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(user.JwtSecret));
@@ -454,6 +428,16 @@ namespace ApiContabsv.Controllers
             }
 
             return null;
+        }
+
+        private class ReceptorData
+        {
+            public string TipoDocumento { get; set; } = string.Empty;
+            public string NumDocumento { get; set; } = string.Empty;
+            public string Nombre { get; set; } = string.Empty;
+            public decimal MontoIva { get; set; }
+            public string? Telefono { get; set; }
+            public string? Correo { get; set; }
         }
 
         #endregion
