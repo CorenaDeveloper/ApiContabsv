@@ -11,6 +11,7 @@ namespace ApiContabsv.Services
     {
         Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType , int version );
         Task<HaciendaAuthResult> AuthenticateUser(string userHacienda, string userPassword, string ambiente);
+        Task<HaciendaTransmissionResult?> TransmitInvalidation(string signedJWT, string userNit, string ambiente, string invalidacionId);
     }
 
     public class HaciendaService : IHaciendaService
@@ -197,6 +198,136 @@ namespace ApiContabsv.Services
                 };
             }
         }
+
+
+        public async Task<HaciendaTransmissionResult?> TransmitInvalidation(string signedJWT, string userNit, string ambiente, string invalidacionId)
+        {
+            try
+            {
+                // 1. OBTENER TOKEN DE HACIENDA
+                var token = await GetOrRefreshHaciendaToken(userNit, ambiente);
+                if (string.IsNullOrEmpty(token))
+                {
+                    return new HaciendaTransmissionResult
+                    {
+                        Success = false,
+                        Status = "ERROR_AUTH",
+                        Error = "No se pudo obtener token de autenticación",
+                        ResponseCode = "AUTH_ERROR"
+                    };
+                }
+
+                // 2. PREPARAR REQUEST PARA HACIENDA (formato específico de invalidación)
+                var haciendaRequest = new
+                {
+                    ambiente = ambiente,
+                    idEnvio = 1,
+                    version = 2,
+                    documento = signedJWT
+                };
+
+                var jsonContent = JsonSerializer.Serialize(haciendaRequest);
+
+                // 3. CONFIGURAR HTTP CLIENT
+                var httpClient = _httpClientFactory.CreateClient();
+                httpClient.Timeout = TimeSpan.FromSeconds(45);
+
+                // 4. OBTENER URL DE INVALIDACIÓN
+                var nullifyUrl = GetHaciendaUrl("NullifyUrl", ambiente);
+                if (string.IsNullOrEmpty(nullifyUrl))
+                {
+                    return new HaciendaTransmissionResult
+                    {
+                        Success = false,
+                        Status = "ERROR_CONFIG",
+                        Error = "URL de invalidación no configurada",
+                        ResponseCode = "CONFIG_ERROR"
+                    };
+                }
+
+                // 5. CONFIGURAR HEADERS
+                httpClient.DefaultRequestHeaders.Clear();
+                httpClient.DefaultRequestHeaders.Add("Authorization", token);
+                httpClient.DefaultRequestHeaders.Add("User-Agent", "ApiContabsv/1.0");
+
+                var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+
+                // 6. ENVIAR A HACIENDA
+                var response = await httpClient.PostAsync(nullifyUrl, content);
+                var responseContent = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation($"Respuesta invalidación Hacienda - Status: {response.StatusCode}, Content: {responseContent}");
+
+                // 7. PROCESAR RESPUESTA (MISMA LÓGICA QUE TransmitDocument)
+                HaciendaResponse? haciendaResponse = null;
+                try
+                {
+                    haciendaResponse = JsonSerializer.Deserialize<HaciendaResponse>(responseContent);
+                }
+                catch (JsonException)
+                {
+                    // Si no se puede parsear como JSON, es un error de transmisión
+                }
+
+                // LÓGICA IGUAL QUE TransmitDocument:
+                if (haciendaResponse != null && !string.IsNullOrEmpty(haciendaResponse.Estado))
+                {
+                    // Tenemos una respuesta válida de Hacienda, procesarla según el estado
+                    bool isProcessed = haciendaResponse.Estado == "PROCESADO";
+                    bool isRejected = haciendaResponse.Estado == "RECHAZADO";
+
+                    return new HaciendaTransmissionResult
+                    {
+                        Success = isProcessed,
+                        Status = haciendaResponse.Estado,
+                        ReceptionStamp = haciendaResponse.SelloRecibido,
+                        ResponseCode = haciendaResponse.CodigoMsg,
+                        Message = haciendaResponse.Descripcion,
+                        Error = isRejected ? $"Invalidación rechazada por Hacienda: {haciendaResponse.Descripcion}" : null,
+                        ErrorDetails = isRejected ? string.Join("; ", haciendaResponse.Observaciones ?? Array.Empty<string>()) : null,
+                        RawResponse = responseContent
+                    };
+                }
+                else
+                {
+                    return new HaciendaTransmissionResult
+                    {
+                        Success = false,
+                        Status = null,
+                        Error = response.IsSuccessStatusCode ? "Respuesta inválida de Hacienda" : $"Error HTTP {response.StatusCode}",
+                        ErrorDetails = responseContent,
+                        RawResponse = responseContent
+                    };
+                }
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "Error HTTP enviando invalidación {InvalidacionId} a Hacienda", invalidacionId);
+
+                return new HaciendaTransmissionResult
+                {
+                    Success = false,
+                    Status = "ERROR_CONNECTION",
+                    Error = "Error de conexión con Hacienda",
+                    ErrorDetails = httpEx.Message,
+                    ResponseCode = "HTTP_ERROR"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error interno enviando invalidación {InvalidacionId} a Hacienda", invalidacionId);
+
+                return new HaciendaTransmissionResult
+                {
+                    Success = false,
+                    Status = "ERROR_INTERNAL",
+                    Error = "Error interno procesando invalidación",
+                    ErrorDetails = ex.Message,
+                    ResponseCode = "INTERNAL_ERROR"
+                };
+            }
+        }
+
 
 
         public async Task<HaciendaAuthResult> AuthenticateUser(string userHacienda, string userPassword, string ambiente)
