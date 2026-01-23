@@ -213,6 +213,7 @@ namespace ApiContabsv.Controllers
             // OBTENER DATOS REALES DEL RECEPTOR DEL DOCUMENTO ORIGINAL
             var receptorData = await GetOriginalDocumentReceptor(documento.JsonContent);
 
+            // ✅ RETORNAR DIRECTAMENTE EL JSON DE INVALIDACIÓN (SIN WRAPPER)
             return new
             {
                 identificacion = new
@@ -238,7 +239,7 @@ namespace ApiContabsv.Controllers
                 {
                     tipoDte = documento.DocumentType,
                     codigoGeneracion = documento.DteId,
-                    selloRecibido = (string?)null,
+                    selloRecibido = documento.ReceptionStamp ?? "", // ✅ STRING VACÍO en lugar de null
                     numeroControl = detalles.ControlNumber,
                     fecEmi = documento.CreatedAt?.ToString("yyyy-MM-dd"),
                     montoIva = receptorData.MontoIva,
@@ -362,12 +363,13 @@ namespace ApiContabsv.Controllers
         {
             try
             {
+                // ✅ ENVIAR SOLO EL JSON DE INVALIDACIÓN (IGUAL QUE INVOICE)
                 var firmingRequest = new
                 {
                     nit = user.Nit,
                     activo = true,
                     passwordPri = user.PasswordPri,
-                    dteJson = invalidacionDocument
+                    dteJson = invalidacionDocument  // ← ESTE ES EL JSON PURO DE INVALIDACIÓN
                 };
 
                 var httpClient = _httpClientFactory.CreateClient();
