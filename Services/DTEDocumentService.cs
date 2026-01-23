@@ -10,7 +10,7 @@ namespace ApiContabsv.Services
         Task<int> SaveDocument(SaveDocumentRequest request);
         Task<bool> UpdateDocumentStatus(string dteId, string status, string? receptionStamp = null, string? errorMessage = null, string? errorDetails = null, string? haciendaResponse = null, string? responseCode = null);
         Task<DTEDocumentResponse?> GetDocument(string dteId);
-        Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, int page = 1, int pageSize = 20, DateTime? startDate = null, DateTime? endDate = null);
+        Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, DateTime? startDate = null, DateTime? endDate = null, string DocumentType = "");
         Task<int> GetNextSequenceNumber(int userId, string documentType, string establishmentCode, string posCode);
     }
 
@@ -146,15 +146,14 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, int page = 1, int pageSize = 20, DateTime? startDate = null, DateTime? endDate = null)
+        public async Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, DateTime? startDate = null, DateTime? endDate = null, string DocumentType = "")
         {
             try
             {
-                var skip = (page - 1) * pageSize;
 
                 // Query base
                 var query = _context.DteDocuments
-                    .Where(d => d.UserId == userId);
+                    .Where(d => d.UserId == userId && d.DocumentType == DocumentType);
 
                 // AGREGAR FILTROS POR FECHA
                 if (startDate.HasValue)
@@ -171,8 +170,6 @@ namespace ApiContabsv.Services
 
                 var documents = await query
                     .OrderByDescending(d => d.CreatedAt)
-                    .Skip(skip)
-                    .Take(pageSize)
                     .Select(d => new DTEDocumentResponse
                     {
                         Id = d.Id,

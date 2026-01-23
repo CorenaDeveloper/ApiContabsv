@@ -270,7 +270,7 @@ namespace ApiContabsv.Controllers
         /// LISTAR DOCUMENTOS DE UN USUARIO
         /// </summary>
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(int userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? startDate = null, [FromQuery] string? endDate = null)
+        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(int userId, [FromQuery] string? startDate = null, [FromQuery] string? endDate = null)
         {
             try
             {
@@ -287,7 +287,7 @@ namespace ApiContabsv.Controllers
                     parsedEndDate = end;
                 }
 
-                var documents = await _documentService.GetDocumentsByUser(userId, page, pageSize, parsedStartDate, parsedEndDate);
+                var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate,  "01");
                 return Ok(documents);
             }
             catch (Exception ex)
@@ -536,9 +536,9 @@ namespace ApiContabsv.Controllers
                {
                    codigo = p.Code,
                    montoPago = p.Amount,
-                   referencia = "REF001",  // ✅ Agregar referencia
-                   periodo = 1,            // ✅ Agregar periodo
-                   plazo = "01"            // ✅ Agregar plazo
+                   referencia = "REF001", 
+                   periodo = 1,           
+                   plazo = "01"           
                }).ToArray()
             };
         }

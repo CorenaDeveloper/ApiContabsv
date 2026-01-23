@@ -53,6 +53,14 @@ namespace ApiContabsv.Controllers
                         m.Email,
                         m.Direccion,
                         m.IdActividadEconomica,
+                        codigoActividadEconomica = _context.ActividadesEconomicas
+                            .Where(ae => ae.Id == m.IdActividadEconomica)
+                            .Select(ae => ae.Codigo)
+                            .FirstOrDefault(),
+                        actividadNombre = _context.ActividadesEconomicas
+                            .Where(ae => ae.Id == m.IdActividadEconomica)
+                            .Select(ae => ae.Descripcion)
+                            .FirstOrDefault(),
                         m.IdDepartamento,
                         codigoDepartamento = _context.Departamentos
                             .Where(d => d.Id == m.IdDepartamento)

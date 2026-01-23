@@ -101,7 +101,7 @@ namespace ApiContabsv.Controllers
                 {
                     DteId = dteId,
                     UserId = user.Id,
-                    DocumentType = "03", // CCF
+                    DocumentType = "03", 
                     GenerationType = 1,
                     ControlNumber = controlNumber,
                     TotalAmount = request.Summary?.TotalToPay ?? 0,
@@ -115,6 +115,7 @@ namespace ApiContabsv.Controllers
 
                 // 10. ENVIAR A HACIENDA
                 HaciendaTransmissionResult? transmissionResult = null;
+                string finalDocumentStatus = "FIRMADO";
 
                 if (request.SendToHacienda != false)
                 {
@@ -126,36 +127,66 @@ namespace ApiContabsv.Controllers
                         3
                         );
 
-                    if (transmissionResult.Success)
+                    // ✅ LÓGICA CORREGIDA BASADA EN GO:
+                    if (transmissionResult != null)
                     {
+                        string errorMessage = null;
+                        string errorDetails = null;
+                        string responseCode = null;
+
+                        if (transmissionResult.Success)
+                        {
+                            //  Documento procesado exitosamente
+                            finalDocumentStatus = transmissionResult.Status ?? "PROCESADO";
+                        }
+                        else if (transmissionResult.Status == "RECHAZADO")
+                        {
+                            //  Documento rechazado por Hacienda (NO va a contingencia)
+                            finalDocumentStatus = "RECHAZADO";
+                            errorMessage = transmissionResult.Error;
+                            errorDetails = transmissionResult.ErrorDetails;
+                            responseCode = transmissionResult.ResponseCode;
+                        }
+                        else
+                        {
+                            finalDocumentStatus = "ERROR_TRANSMISION";
+                            errorMessage = transmissionResult.Error;
+                            errorDetails = transmissionResult.ErrorDetails;
+
+                        }
+
+                        // Actualizar estado en base de datos CON DETALLES DE ERROR
                         await _documentService.UpdateDocumentStatus(
                             dteId,
-                            transmissionResult.Status ?? "PROCESADO",
-                            transmissionResult.ReceptionStamp);
+                            finalDocumentStatus,
+                            transmissionResult.ReceptionStamp,
+                            errorMessage,
+                            errorDetails,
+                            transmissionResult.RawResponse,
+                            responseCode);
+
+                        _logger.LogInformation($"Documento {dteId} actualizado a estado: {finalDocumentStatus}");
                     }
                     else
                     {
-                        _logger.LogWarning("Error transmitiendo CCF a Hacienda: {Error}",
-                            transmissionResult.Error);
+                        _logger.LogError($"transmissionResult es null para documento {dteId}");
+                        finalDocumentStatus = "ERROR_TRANSMISION";
+
+                        await _documentService.UpdateDocumentStatus(
+                            dteId,
+                            finalDocumentStatus,
+                            null,
+                            "Error interno: transmissionResult es null",
+                            null,
+                            null,
+                            null);
                     }
                 }
-
-                // 11. RESPUESTA EXITOSA
-                var haciendaInfo = new
-                {
-                    sent = transmissionResult != null,
-                    success = transmissionResult?.Success ?? false,
-                    status = transmissionResult?.Status,
-                    receptionStamp = transmissionResult?.ReceptionStamp,
-                    error = transmissionResult?.Error,
-                    errorDetails = transmissionResult?.ErrorDetails,
-                    fullResponse = transmissionResult?.RawResponse
-                };
 
                 var response = new
                 {
                     success = true,
-                    message = "CCF procesado exitosamente",
+                    message = "Factura procesada exitosamente",
                     data = new
                     {
                         documentId = documentId,
@@ -164,11 +195,20 @@ namespace ApiContabsv.Controllers
                         codigoGeneracion = dteId,
                         signer = optimalSigner.SignerName,
                         signedJWT = signedJWT,
-                        hacienda = haciendaInfo,
+                        hacienda = new
+                        {
+                            sent = transmissionResult != null,
+                            success = transmissionResult?.Success ?? false,
+                            status = transmissionResult?.Status,
+                            receptionStamp = transmissionResult?.ReceptionStamp,
+                            responseCode = transmissionResult?.ResponseCode,
+                            message = transmissionResult?.Message,
+                            error = transmissionResult?.Error,
+                            errorDetails = transmissionResult?.ErrorDetails
+                        },
                         document = new
                         {
-                            status = transmissionResult?.Success == true ?
-                                transmissionResult.Status : "FIRMADO",
+                            status = finalDocumentStatus, 
                             createdAt = DateTime.Now,
                             totalAmount = saveRequest.TotalAmount
                         }
@@ -226,14 +266,24 @@ namespace ApiContabsv.Controllers
         /// LISTAR DOCUMENTOS CCF DE UN USUARIO
         /// </summary>
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(
-            int userId,
-            [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 20)
+        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(int userId,string? startDate = null, [FromQuery] string? endDate = null)
         {
             try
             {
-                var documents = await _documentService.GetDocumentsByUser(userId, page, pageSize);
+                DateTime? parsedStartDate = null;
+                DateTime? parsedEndDate = null;
+
+                if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
+                {
+                    parsedStartDate = start;
+                }
+
+                if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
+                {
+                    parsedEndDate = end;
+                }
+
+                var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate, "03");
                 return Ok(documents);
             }
             catch (Exception ex)

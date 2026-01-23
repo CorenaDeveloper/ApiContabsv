@@ -394,6 +394,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string Description { get; set; } = "";
 
         [JsonPropertyName("quantity")]
+        [JsonConverter(typeof(QuantityConverter))] // ✅ Redondeo a 8 decimales
         [Required(ErrorMessage = "La cantidad es requerida")]
         [Range(0.01, double.MaxValue, ErrorMessage = "La cantidad debe ser mayor a 0")]
         public decimal Quantity { get; set; }
@@ -404,10 +405,12 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public int UnitMeasure { get; set; }
 
         [JsonPropertyName("unit_price")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El precio unitario no puede ser negativo")]
         public decimal UnitPrice { get; set; }
 
         [JsonPropertyName("discount")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El descuento no puede ser negativo")]
         public decimal Discount { get; set; }
 
@@ -416,27 +419,34 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? Code { get; set; }
 
         [JsonPropertyName("non_subject_sale")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "La venta no sujeta no puede ser negativa")]
         public decimal NonSubjectSale { get; set; }
 
         [JsonPropertyName("exempt_sale")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "La venta exenta no puede ser negativa")]
         public decimal ExemptSale { get; set; }
 
         [JsonPropertyName("taxed_sale")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "La venta gravada no puede ser negativa")]
         public decimal TaxedSale { get; set; }
 
         [JsonPropertyName("suggested_price")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El precio sugerido no puede ser negativo")]
         public decimal SuggestedPrice { get; set; }
 
         [JsonPropertyName("non_taxed")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El monto no gravado no puede ser negativo")]
         public decimal NonTaxed { get; set; }
 
         [JsonPropertyName("taxes")]
         public List<string>? Taxes { get; set; }
+
+        [JsonPropertyName("related_document_number")]
         [StringLength(50, ErrorMessage = "El número de documento relacionado no puede exceder 50 caracteres")]
         public string? RelatedDocumentNumber { get; set; }
     }
@@ -489,61 +499,74 @@ namespace ApiContabsv.DTO.DB_DteDTO
     }
 
     /// <summary>
-    /// DTO para resumen de CCF con validaciones específicas
+    /// DTO para resumen de CCF con redondeo automático
     /// </summary>
     public class CCFSummaryRequestDTO
     {
         [JsonPropertyName("total_non_subject")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El total no sujeto no puede ser negativo")]
         public decimal TotalNonSubject { get; set; }
 
         [JsonPropertyName("total_exempt")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El total exento no puede ser negativo")]
         public decimal TotalExempt { get; set; }
 
         [JsonPropertyName("total_taxed")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El total gravado no puede ser negativo")]
         public decimal TotalTaxed { get; set; }
 
         [JsonPropertyName("sub_total")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Required(ErrorMessage = "El subtotal es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El subtotal no puede ser negativo")]
         public decimal SubTotal { get; set; }
 
         [JsonPropertyName("non_subject_discount")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El descuento no sujeto no puede ser negativo")]
         public decimal NonSubjectDiscount { get; set; }
 
         [JsonPropertyName("exempt_discount")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El descuento exento no puede ser negativo")]
         public decimal ExemptDiscount { get; set; }
 
         [JsonPropertyName("taxed_discount")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El descuento gravado no puede ser negativo")]
         public decimal TaxedDiscount { get; set; }
 
         [JsonPropertyName("discount_percentage")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, 100, ErrorMessage = "El porcentaje de descuento debe estar entre 0 y 100")]
         public decimal DiscountPercentage { get; set; }
 
         [JsonPropertyName("total_discount")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El total de descuentos no puede ser negativo")]
         public decimal TotalDiscount { get; set; }
 
         [JsonPropertyName("sub_total_sales")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El subtotal de ventas no puede ser negativo")]
         public decimal SubTotalSales { get; set; }
 
         [JsonPropertyName("total_operation")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Required(ErrorMessage = "El total de operación es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El total de operación no puede ser negativo")]
         public decimal TotalOperation { get; set; }
 
         [JsonPropertyName("total_non_taxed")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El total no gravado no puede ser negativo")]
         public decimal TotalNonTaxed { get; set; }
 
         [JsonPropertyName("total_to_pay")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Required(ErrorMessage = "El total a pagar es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El total a pagar no puede ser negativo")]
         public decimal TotalToPay { get; set; }
@@ -553,25 +576,30 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Range(1, 3, ErrorMessage = "La condición de operación debe ser 1 (Contado), 2 (Crédito) o 3 (Otro)")]
         public int OperationCondition { get; set; }
 
-        // ✅ CAMPOS ESPECÍFICOS DE CCF
+        // CAMPOS ESPECÍFICOS DE CCF
         [JsonPropertyName("iva_perception")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "La percepción de IVA no puede ser negativa")]
         public decimal IvaPerception { get; set; }
 
         [JsonPropertyName("iva_retention")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "La retención de IVA no puede ser negativa")]
         public decimal IvaRetention { get; set; }
 
         [JsonPropertyName("income_retention")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "La retención de renta no puede ser negativa")]
         public decimal IncomeRetention { get; set; }
 
         [JsonPropertyName("balance_in_favor")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El saldo a favor no puede ser negativo")]
         public decimal BalanceInFavor { get; set; }
 
         [JsonPropertyName("total_iva")]
-        public decimal TotalIva { get; set; } = 0; // DEBE SER 0 para CCF
+        [JsonConverter(typeof(MoneyConverter))] 
+        public decimal TotalIva { get; set; } = 0; 
 
         [JsonPropertyName("taxes")]
         public List<TaxRequestDTO>? Taxes { get; set; }
@@ -581,7 +609,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
     }
 
     /// <summary>
-    /// DTO para impuestos
+    /// DTO para impuestos con redondeo automático
     /// </summary>
     public class TaxRequestDTO
     {
@@ -595,12 +623,14 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? Description { get; set; }
 
         [JsonPropertyName("value")]
+        [JsonConverter(typeof(MoneyConverter))] 
         [Range(0, double.MaxValue, ErrorMessage = "El valor del impuesto no puede ser negativo")]
         public decimal Value { get; set; }
     }
 
+
     /// <summary>
-    /// DTO para tipos de pago en CCF
+    /// DTO para tipos de pago en CCF con redondeo automático
     /// </summary>
     public class CCFPaymentTypeRequestDTO
     {
@@ -610,6 +640,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string Code { get; set; } = "";
 
         [JsonPropertyName("amount")]
+        [JsonConverter(typeof(MoneyConverter))]
         [Required(ErrorMessage = "El monto es requerido")]
         [Range(0.01, double.MaxValue, ErrorMessage = "El monto debe ser mayor a 0")]
         public decimal Amount { get; set; }
@@ -668,7 +699,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
 }
 
 //{
-//  "clientId": 6,
+//    "clientId": 6,
 //  "userId": 5,
 //  "items": [
 //    {
