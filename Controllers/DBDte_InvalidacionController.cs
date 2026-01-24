@@ -71,9 +71,9 @@ namespace ApiContabsv.Controllers
                     return BadRequest(ModelState);
 
                 // 2. OBTENER DATOS DEL USER
-                var user = await _context.Users.FindAsync(request.ClienteId);
+                var user = await _context.Users.FindAsync(request.UserId);
                 if (user == null)
-                    return BadRequest($"Usuario con ID {request.ClienteId} no encontrado");
+                    return BadRequest($"Usuario con ID {request.UserId} no encontrado");
 
                 // 3. OBTENER FIRMADOR ÓPTIMO (siguiendo tu patrón)
                 var optimalSigner = await GetOptimalSignerForUser(request.UserId);
