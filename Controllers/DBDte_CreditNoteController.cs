@@ -1,12 +1,10 @@
 ﻿using ApiContabsv.DTO.DB_DteDTO;
 using ApiContabsv.Models.Dte;
 using ApiContabsv.Services;
-using CloudinaryDotNet.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 using System.Text.Json;
-using XAct;
 
 namespace ApiContabsv.Controllers
 {
@@ -124,7 +122,7 @@ namespace ApiContabsv.Controllers
                         user.Nit,
                         request.Environment ?? "00",
                         "05",
-                        1
+                        3
                     );
 
                     if (transmissionResult != null)
@@ -277,7 +275,7 @@ namespace ApiContabsv.Controllers
                 // SECCIÓN IDENTIFICACION
                 identificacion = new
                 {
-                    version = 1,
+                    version = 3, // ✅ Nota de Crédito versión 3 (como en GO)
                     ambiente = request.Environment ?? "00",
                     tipoDte = "05", // ✅ Nota de Crédito
                     numeroControl = controlNumber,
@@ -303,7 +301,6 @@ namespace ApiContabsv.Controllers
                     : null,
 
                 // CAMPOS OPCIONALES
-                otrosDocumentos = (object?)null,
                 ventaTercero = request.ThirdPartySale != null ? new
                 {
                     nit = request.ThirdPartySale.Nit,
@@ -311,6 +308,7 @@ namespace ApiContabsv.Controllers
                 } : null,
                 extension = (object?)null,
                 apendice = (object?)null
+                // ❌ NO incluir: otrosDocumentos (no está permitido en NC)
             };
         }
 
@@ -325,8 +323,6 @@ namespace ApiContabsv.Controllers
                 descActividad = user.EconomicActivityDesc,
                 nombreComercial = user.CommercialName,
                 tipoEstablecimiento = "02",
-                codEstable = "M001",
-                codPuntoVenta = "P000",
                 direccion = new
                 {
                     departamento = "03",
@@ -334,9 +330,8 @@ namespace ApiContabsv.Controllers
                     complemento = "Barrio el Ángel, calle el Ángel, casa 26 Sonsonate"
                 },
                 telefono = "61032136",
-                correo = "corenadeveloper@gmail.com",
-                codEstableMH = "M001",
-                codPuntoVentaMH = "P000"
+                correo = "corenadeveloper@gmail.com"
+                // ❌ NO incluir: codEstable, codPuntoVenta, codEstableMH, codPuntoVentaMH
             };
         }
 
@@ -346,10 +341,10 @@ namespace ApiContabsv.Controllers
 
             return new
             {
-                nombre = receiver.Name,
-                tipoDocumento = receiver.DocumentType,
-                numDocumento = receiver.DocumentNumber,
+                nit = receiver.DocumentNumber, // ✅ Campo requerido para NC
                 nrc = receiver.Nrc,
+                nombre = receiver.Name,
+                nombreComercial = receiver.Name, // ✅ Campo requerido para NC
                 codActividad = receiver.ActivityCode,
                 descActividad = receiver.ActivityDescription,
                 direccion = receiver.Address != null ? new
@@ -360,6 +355,7 @@ namespace ApiContabsv.Controllers
                 } : null,
                 telefono = receiver.Phone,
                 correo = receiver.Email
+                // ❌ NO incluir: tipoDocumento, numDocumento
             };
         }
 
@@ -369,7 +365,7 @@ namespace ApiContabsv.Controllers
             {
                 numItem = index + 1,
                 tipoItem = item.Type,
-                numeroDocumento = (string?)null,
+                numeroDocumento = item.RelatedDocumentNumber, // ✅ Requerido en NC
                 codigo = item.Code,
                 codTributo = (string?)null,
                 descripcion = item.Description,
@@ -380,9 +376,7 @@ namespace ApiContabsv.Controllers
                 ventaNoSuj = item.NonSubjectSale,
                 ventaExenta = item.ExemptSale,
                 ventaGravada = item.TaxedSale,
-                tributos = item.Taxes?.ToArray(),
-                psv = item.SuggestedPrice,
-                noGravado = item.NonTaxed
+                tributos = item.Taxes?.ToArray()
             }).ToArray();
         }
 
@@ -390,29 +384,36 @@ namespace ApiContabsv.Controllers
         {
             if (summary == null) return null;
 
+            // Calcular tributos automáticamente como en GO
+            var tributos = new List<object>();
+            if (summary.TotalTaxed > 0)
+            {
+                tributos.Add(new
+                {
+                    codigo = "20",
+                    descripcion = "Impuesto al Valor Agregado 13%",
+                    valor = Math.Round(summary.TotalTaxed * 0.13m, 2)
+                });
+            }
+
             return new
             {
                 totalNoSuj = summary.TotalNonSubject,
                 totalExenta = summary.TotalExempt,
                 totalGravada = summary.TotalTaxed,
-                subTotalVentas = summary.SubTotal,
+                subTotalVentas = summary.SubTotalSales,
                 descuNoSuj = summary.NonSubjectDiscount,
                 descuExenta = summary.ExemptDiscount,
                 descuGravada = summary.TaxedDiscount,
-                porcentajeDescuento = summary.DiscountPercentage,
                 totalDescu = summary.TotalDiscount,
-                subTotal = summary.SubTotalSales,
-                montoTotalOperacion = summary.TotalOperation,
-                totalPagar = summary.TotalToPay,
-                condicionOperacion = summary.OperationCondition,
+                tributos = tributos.ToArray(), // ✅ Tributos calculados automáticamente
+                subTotal = summary.SubTotal,
                 ivaRete1 = summary.IvaRetention,
                 ivaPerci1 = summary.IvaPerception,
                 reteRenta = summary.IncomeRetention,
-                saldoFavor = summary.BalanceInFavor,
-                totalIva = summary.TotalIva,
-                tributos = (object[]?)null,
+                montoTotalOperacion = summary.TotalOperation,
                 totalLetras = "CERO CON 00/100 DOLARES",
-                numPagoElectronico = (string?)null
+                condicionOperacion = summary.OperationCondition
             };
         }
 

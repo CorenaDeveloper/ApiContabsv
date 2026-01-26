@@ -97,16 +97,13 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Range(0, double.MaxValue)]
         public decimal TaxedSale { get; set; } = 0;
 
-        [JsonPropertyName("suggested_price")]
-        [Range(0, double.MaxValue)]
-        public decimal SuggestedPrice { get; set; } = 0;
-
-        [JsonPropertyName("non_taxed")]
-        [Range(0, double.MaxValue)]
-        public decimal NonTaxed { get; set; } = 0;
-
         [JsonPropertyName("taxes")]
         public List<string>? Taxes { get; set; }
+
+        [JsonPropertyName("related_document_number")]
+        [Required(ErrorMessage = "El número de documento relacionado es requerido para NC")]
+        [StringLength(50)]
+        public string RelatedDocumentNumber { get; set; } = "";
     }
 
     /// <summary>
@@ -119,13 +116,10 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [StringLength(250, MinimumLength = 1)]
         public string Name { get; set; } = "";
 
-        [JsonPropertyName("document_type")]
-        [StringLength(2)]
-        public string? DocumentType { get; set; }
-
-        [JsonPropertyName("document_number")]
+        [JsonPropertyName("nit")]
+        [Required(ErrorMessage = "El NIT es requerido para Nota de Crédito")]
         [StringLength(25)]
-        public string? DocumentNumber { get; set; }
+        public string DocumentNumber { get; set; } = ""; // Se mapea como nit
 
         [JsonPropertyName("nrc")]
         [StringLength(10)]
@@ -149,6 +143,8 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [JsonPropertyName("email")]
         [StringLength(100)]
         public string? Email { get; set; }
+
+        // ❌ NO incluir: document_type (no permitido en NC)
     }
 
     /// <summary>

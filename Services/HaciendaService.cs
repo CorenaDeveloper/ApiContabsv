@@ -58,7 +58,7 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType, int version = 1)
+        public async Task<HaciendaTransmissionResult> TransmitDocument(string signedJWT, string userNit, string ambiente, string documentType, int version)
         {
             try
             {
