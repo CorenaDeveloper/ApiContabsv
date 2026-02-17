@@ -97,7 +97,7 @@ namespace ApiContabsv.Services
                             payment_method_preference = "UNRESTRICTED",
                             brand_name = "ContabSV",
                             locale = "es-SV",
-                            landing_page = "LOGIN",
+                            landing_page = "NO_PREFERENCE",
                             user_action = "PAY_NOW",
                             return_url = returnUrl,
                             cancel_url = cancelUrl
