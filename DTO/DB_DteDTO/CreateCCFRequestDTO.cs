@@ -19,6 +19,11 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Range(1, int.MaxValue, ErrorMessage = "El ID del usuario debe ser mayor a 0")]
         public int UserId { get; set; }
 
+        [JsonPropertyName("branchOfficeId")]
+        [Required(ErrorMessage = "El ID de la sucursal es requerido")]
+        [Range(1, int.MaxValue, ErrorMessage = "El ID de la sucursal debe ser mayor a 0")]
+        public int BranchOfficeId { get; set; }
+
         [JsonPropertyName("items")]
         [Required(ErrorMessage = "Los items son requeridos")]
         [MinLength(1, ErrorMessage = "Debe incluir al menos 1 item")]
@@ -95,24 +100,54 @@ namespace ApiContabsv.DTO.DB_DteDTO
                 var item = Items[i];
                 var prefix = $"Items[{i}]";
 
-                // Validaciones básicas de item
+                // Validar que la cantidad sea positiva
                 if (item.Quantity <= 0)
                 {
                     results.Add(new ValidationResult($"La cantidad del item {i + 1} debe ser mayor a 0", new[] { $"{prefix}.Quantity" }));
                 }
 
+                // Validar que el precio unitario no sea negativo
                 if (item.UnitPrice < 0)
                 {
                     results.Add(new ValidationResult($"El precio unitario del item {i + 1} no puede ser negativo", new[] { $"{prefix}.UnitPrice" }));
                 }
 
+                // Validar que el descuento no sea negativo
                 if (item.Discount < 0)
                 {
                     results.Add(new ValidationResult($"El descuento del item {i + 1} no puede ser negativo", new[] { $"{prefix}.Discount" }));
                 }
 
-                // ✅ VALIDACIONES ESPECÍFICAS DE CCF:
+                // Validar que el descuento no sea mayor al subtotal
+                var itemSubtotal = item.Quantity * item.UnitPrice;
+                if (item.Discount > itemSubtotal)
+                {
+                    results.Add(new ValidationResult($"El descuento del item {i + 1} no puede ser mayor al subtotal", new[] { $"{prefix}.Discount" }));
+                }
 
+                // Validar descripción
+                if (string.IsNullOrWhiteSpace(item.Description))
+                {
+                    results.Add(new ValidationResult($"La descripción del item {i + 1} es requerida", new[] { $"{prefix}.Description" }));
+                }
+                else if (item.Description.Length > 1000)
+                {
+                    results.Add(new ValidationResult($"La descripción del item {i + 1} no puede exceder 1000 caracteres", new[] { $"{prefix}.Description" }));
+                }
+
+                // Validar tipo de item
+                if (item.Type < 1 || item.Type > 4)
+                {
+                    results.Add(new ValidationResult($"El tipo del item {i + 1} debe estar entre 1 y 4", new[] { $"{prefix}.Type" }));
+                }
+
+                // Validar unidad de medida para tipo 4
+                if (item.Type == 4 && item.UnitMeasure != 99)
+                {
+                    results.Add(new ValidationResult($"Para items tipo 4, la unidad de medida debe ser 99", new[] { $"{prefix}.UnitMeasure" }));
+                }
+
+      
                 // CCF: Si hay venta gravada > 0 pero precio unitario = 0, es inválido
                 if (item.TaxedSale > 0 && item.UnitPrice == 0)
                 {
@@ -123,18 +158,6 @@ namespace ApiContabsv.DTO.DB_DteDTO
                 if (item.NonTaxed > 0 && item.UnitPrice == 0)
                 {
                     results.Add(new ValidationResult($"El item {i + 1} no puede tener precio unitario 0 cuando hay monto no gravado", new[] { $"{prefix}.UnitPrice" }));
-                }
-
-                // CCF: Validar que el tipo de item sea válido (1-4)
-                if (item.Type < 1 || item.Type > 4)
-                {
-                    results.Add(new ValidationResult($"El tipo del item {i + 1} debe estar entre 1 y 4", new[] { $"{prefix}.Type" }));
-                }
-
-                // CCF: Para items tipo 4, unidad de medida debe ser 99
-                if (item.Type == 4 && item.UnitMeasure != 99)
-                {
-                    results.Add(new ValidationResult($"Para items tipo 4, la unidad de medida debe ser 99", new[] { $"{prefix}.UnitMeasure" }));
                 }
 
                 // CCF: Validar que no sean negativos los montos de venta
@@ -187,35 +210,47 @@ namespace ApiContabsv.DTO.DB_DteDTO
                 return;
             }
 
-            //  CCF REQUIERE NRC OBLIGATORIAMENTE
+            // CCF REQUIERE NRC OBLIGATORIAMENTE
             if (string.IsNullOrWhiteSpace(Receiver.Nrc))
             {
                 results.Add(new ValidationResult("El NRC es obligatorio para el receptor en CCF", new[] { "Receiver.Nrc" }));
             }
             else
             {
-                // Validar formato de NRC (1-8 dígitos)
-                if (!System.Text.RegularExpressions.Regex.IsMatch(Receiver.Nrc, @"^[0-9]{1,8}$"))
+                // Limpiar NRC y validar formato (1-8 dígitos)
+                var cleanNrc = Receiver.Nrc.Replace("-", "").Trim();
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanNrc, @"^[0-9]{1,8}$"))
                 {
                     results.Add(new ValidationResult("El NRC debe tener entre 1 y 8 dígitos", new[] { "Receiver.Nrc" }));
                 }
+                else
+                {
+                    // Asignar NRC limpio
+                    Receiver.Nrc = cleanNrc;
+                }
             }
 
-            //  CCF REQUIERE NIT OBLIGATORIAMENTE
-            if (string.IsNullOrWhiteSpace(Receiver.Nrc))
+            // CCF REQUIERE NIT OBLIGATORIAMENTE - CORREGIDO
+            if (string.IsNullOrWhiteSpace(Receiver.Nit))
             {
                 results.Add(new ValidationResult("El NIT es obligatorio para el receptor en CCF", new[] { "Receiver.Nit" }));
             }
             else
             {
-                // Validar formato de NRC (1-8 dígitos)
-                if (!System.Text.RegularExpressions.Regex.IsMatch(Receiver.Nrc, @"^[0-9]{1,8}$"))
+                // VALIDAR NIT SIN FORMATEO (CCF usa números limpios)
+                var cleanNit = Receiver.Nit.Replace("-", "").Trim();
+                if (!System.Text.RegularExpressions.Regex.IsMatch(cleanNit, @"^([0-9]{14}|[0-9]{9})$"))
                 {
-                    results.Add(new ValidationResult("El NRC debe tener entre 1 y 8 dígitos", new[] { "Receiver.Nrc" }));
+                    results.Add(new ValidationResult("El NIT debe tener 14 dígitos (persona jurídica) o 9 dígitos (persona natural/DUI)", new[] { "Receiver.Nit" }));
+                }
+                else
+                {
+                    // CCF: DEJAR NÚMEROS LIMPIOS (sin guiones)
+                    Receiver.Nit = cleanNit;
                 }
             }
 
-            //  CCF REQUIERE CÓDIGO Y DESCRIPCIÓN DE ACTIVIDAD ECONÓMICA
+            // CCF REQUIERE CÓDIGO Y DESCRIPCIÓN DE ACTIVIDAD ECONÓMICA
             if (string.IsNullOrWhiteSpace(Receiver.ActivityCode))
             {
                 results.Add(new ValidationResult("El código de actividad económica es obligatorio para el receptor en CCF", new[] { "Receiver.ActivityCode" }));
@@ -234,7 +269,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
                 results.Add(new ValidationResult("La descripción de actividad económica es obligatoria para el receptor en CCF", new[] { "Receiver.ActivityDescription" }));
             }
 
-            // Validar email si está presente
+            // Validar email si está presente - APLICANDO VALIDACIONES DE INVOICE
             if (!string.IsNullOrEmpty(Receiver.Email))
             {
                 var emailRegex = @"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
@@ -242,15 +277,19 @@ namespace ApiContabsv.DTO.DB_DteDTO
                 {
                     results.Add(new ValidationResult("El formato del email no es válido", new[] { "Receiver.Email" }));
                 }
+                else if (Receiver.Email.Length < 3 || Receiver.Email.Length > 100)
+                {
+                    results.Add(new ValidationResult("El email debe tener entre 3 y 100 caracteres", new[] { "Receiver.Email" }));
+                }
             }
 
-            // Validar teléfono si está presente
+            // Validar teléfono si está presente - APLICANDO VALIDACIONES DE INVOICE
             if (!string.IsNullOrEmpty(Receiver.Phone))
             {
-                var phoneRegex = @"^[0-9\s\-\+\(\)]{7,25}$";
+                var phoneRegex = @"^[0-9\s\-\+\(\)]{7,15}$";
                 if (!System.Text.RegularExpressions.Regex.IsMatch(Receiver.Phone, phoneRegex))
                 {
-                    results.Add(new ValidationResult("El formato del teléfono no es válido (7-25 caracteres)", new[] { "Receiver.Phone" }));
+                    results.Add(new ValidationResult("El formato del teléfono no es válido", new[] { "Receiver.Phone" }));
                 }
             }
         }
@@ -259,7 +298,6 @@ namespace ApiContabsv.DTO.DB_DteDTO
         {
             if (Summary == null) return;
 
-            // ✅ CCF: TotalIVA DEBE SER 0 (según validaciones específicas de GO)
             if (Summary.TotalIva != 0)
             {
                 results.Add(new ValidationResult("El total de IVA debe ser 0 para CCF", new[] { "Summary.TotalIva" }));
@@ -358,7 +396,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
                 }
             }
 
-            // ✅ CCF: Validar que cada item tenga su documento relacionado referenciado
+            //  CCF: Validar que cada item tenga su documento relacionado referenciado
             if (Items != null)
             {
                 var relatedDocNumbers = RelatedDocs.Select(rd => rd.DocumentNumber).ToHashSet();
@@ -405,12 +443,12 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public int UnitMeasure { get; set; }
 
         [JsonPropertyName("unit_price")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El precio unitario no puede ser negativo")]
         public decimal UnitPrice { get; set; }
 
         [JsonPropertyName("discount")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El descuento no puede ser negativo")]
         public decimal Discount { get; set; }
 
@@ -419,27 +457,27 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? Code { get; set; }
 
         [JsonPropertyName("non_subject_sale")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "La venta no sujeta no puede ser negativa")]
         public decimal NonSubjectSale { get; set; }
 
         [JsonPropertyName("exempt_sale")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "La venta exenta no puede ser negativa")]
         public decimal ExemptSale { get; set; }
 
         [JsonPropertyName("taxed_sale")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "La venta gravada no puede ser negativa")]
         public decimal TaxedSale { get; set; }
 
         [JsonPropertyName("suggested_price")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El precio sugerido no puede ser negativo")]
         public decimal SuggestedPrice { get; set; }
 
         [JsonPropertyName("non_taxed")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El monto no gravado no puede ser negativo")]
         public decimal NonTaxed { get; set; }
 
@@ -504,69 +542,69 @@ namespace ApiContabsv.DTO.DB_DteDTO
     public class CCFSummaryRequestDTO
     {
         [JsonPropertyName("total_non_subject")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El total no sujeto no puede ser negativo")]
         public decimal TotalNonSubject { get; set; }
 
         [JsonPropertyName("total_exempt")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El total exento no puede ser negativo")]
         public decimal TotalExempt { get; set; }
 
         [JsonPropertyName("total_taxed")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El total gravado no puede ser negativo")]
         public decimal TotalTaxed { get; set; }
 
         [JsonPropertyName("sub_total")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Required(ErrorMessage = "El subtotal es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El subtotal no puede ser negativo")]
         public decimal SubTotal { get; set; }
 
         [JsonPropertyName("non_subject_discount")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El descuento no sujeto no puede ser negativo")]
         public decimal NonSubjectDiscount { get; set; }
 
         [JsonPropertyName("exempt_discount")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El descuento exento no puede ser negativo")]
         public decimal ExemptDiscount { get; set; }
 
         [JsonPropertyName("taxed_discount")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El descuento gravado no puede ser negativo")]
         public decimal TaxedDiscount { get; set; }
 
         [JsonPropertyName("discount_percentage")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, 100, ErrorMessage = "El porcentaje de descuento debe estar entre 0 y 100")]
         public decimal DiscountPercentage { get; set; }
 
         [JsonPropertyName("total_discount")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El total de descuentos no puede ser negativo")]
         public decimal TotalDiscount { get; set; }
 
         [JsonPropertyName("sub_total_sales")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El subtotal de ventas no puede ser negativo")]
         public decimal SubTotalSales { get; set; }
 
         [JsonPropertyName("total_operation")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Required(ErrorMessage = "El total de operación es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El total de operación no puede ser negativo")]
         public decimal TotalOperation { get; set; }
 
         [JsonPropertyName("total_non_taxed")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El total no gravado no puede ser negativo")]
         public decimal TotalNonTaxed { get; set; }
 
         [JsonPropertyName("total_to_pay")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Required(ErrorMessage = "El total a pagar es requerido")]
         [Range(0, double.MaxValue, ErrorMessage = "El total a pagar no puede ser negativo")]
         public decimal TotalToPay { get; set; }
@@ -578,28 +616,28 @@ namespace ApiContabsv.DTO.DB_DteDTO
 
         // CAMPOS ESPECÍFICOS DE CCF
         [JsonPropertyName("iva_perception")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "La percepción de IVA no puede ser negativa")]
         public decimal IvaPerception { get; set; }
 
         [JsonPropertyName("iva_retention")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "La retención de IVA no puede ser negativa")]
         public decimal IvaRetention { get; set; }
 
         [JsonPropertyName("income_retention")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "La retención de renta no puede ser negativa")]
         public decimal IncomeRetention { get; set; }
 
         [JsonPropertyName("balance_in_favor")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El saldo a favor no puede ser negativo")]
         public decimal BalanceInFavor { get; set; }
 
         [JsonPropertyName("total_iva")]
-        [JsonConverter(typeof(MoneyConverter))] 
-        public decimal TotalIva { get; set; } = 0; 
+        [JsonConverter(typeof(MoneyConverter))]
+        public decimal TotalIva { get; set; } = 0;
 
         [JsonPropertyName("taxes")]
         public List<TaxRequestDTO>? Taxes { get; set; }
@@ -623,7 +661,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? Description { get; set; }
 
         [JsonPropertyName("value")]
-        [JsonConverter(typeof(MoneyConverter))] 
+        [JsonConverter(typeof(MoneyConverter))]
         [Range(0, double.MaxValue, ErrorMessage = "El valor del impuesto no puede ser negativo")]
         public decimal Value { get; set; }
     }

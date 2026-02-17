@@ -29,7 +29,7 @@ public partial class ContabsvContext : DbContext
 
     public virtual DbSet<InvTiposProducto> InvTiposProductos { get; set; }
 
-    public virtual DbSet<Plane> Planes { get; set; }
+    public virtual DbSet<SuscripcionDetalle> SuscripcionDetalles { get; set; }
 
     public virtual DbSet<Suscripcione> Suscripciones { get; set; }
 
@@ -46,6 +46,10 @@ public partial class ContabsvContext : DbContext
             entity.ToTable("cliente");
 
             entity.Property(e => e.IdCliente).HasColumnName("idCliente");
+            entity.Property(e => e.Ambiente)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("ambiente");
             entity.Property(e => e.Apellidos)
                 .HasMaxLength(60)
                 .IsUnicode(false)
@@ -148,23 +152,23 @@ public partial class ContabsvContext : DbContext
 
         modelBuilder.Entity<HistorialPago>(entity =>
         {
-            entity.HasKey(e => e.IdPago).HasName("PK__historia__BD2295AD0FE5CF85");
+            entity.HasKey(e => e.IdPago).HasName("PK__historia__BD2295ADD30753C8");
 
             entity.ToTable("historialPagos");
 
-            entity.HasIndex(e => e.IdCliente, "IX_historialPagos_cliente");
-
             entity.Property(e => e.IdPago).HasColumnName("idPago");
+            entity.Property(e => e.DetallePago).HasColumnName("detallePago");
             entity.Property(e => e.EstadoPago)
                 .IsRequired()
                 .HasMaxLength(20)
-                .IsUnicode(false)
+                .HasDefaultValue("pendiente")
                 .HasColumnName("estadoPago");
             entity.Property(e => e.FechaCreacion)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("fechaCreacion");
             entity.Property(e => e.FechaPago)
+                .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("fechaPago");
             entity.Property(e => e.IdCliente).HasColumnName("idCliente");
@@ -172,15 +176,24 @@ public partial class ContabsvContext : DbContext
             entity.Property(e => e.MetodoPago)
                 .IsRequired()
                 .HasMaxLength(50)
-                .IsUnicode(false)
+                .HasDefaultValue("paypal")
                 .HasColumnName("metodoPago");
             entity.Property(e => e.Monto)
                 .HasColumnType("decimal(10, 2)")
                 .HasColumnName("monto");
-            entity.Property(e => e.NumeroFactura)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("numeroFactura");
+            entity.Property(e => e.PaypalPaymentId)
+                .HasMaxLength(100)
+                .HasColumnName("paypalPaymentId");
+
+            entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.HistorialPagos)
+                .HasForeignKey(d => d.IdCliente)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_pagos_cliente");
+
+            entity.HasOne(d => d.IdSuscripcionNavigation).WithMany(p => p.HistorialPagos)
+                .HasForeignKey(d => d.IdSuscripcion)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_pagos_suscripcion");
         });
 
         modelBuilder.Entity<InvCategoria>(entity =>
@@ -372,10 +385,6 @@ public partial class ContabsvContext : DbContext
             entity.HasOne(d => d.IdMarcaNavigation).WithMany(p => p.InvProductos)
                 .HasForeignKey(d => d.IdMarca)
                 .HasConstraintName("FK__inv_produ__idMar__797309D9");
-
-            entity.HasOne(d => d.IdTipoNavigation).WithMany(p => p.InvProductos)
-                .HasForeignKey(d => d.IdTipo)
-                .HasConstraintName("FK__inv_produ__idTip__7A672E12");
         });
 
         modelBuilder.Entity<InvStock>(entity =>
@@ -420,49 +429,57 @@ public partial class ContabsvContext : DbContext
                 .HasColumnName("nombre");
         });
 
-        modelBuilder.Entity<Plane>(entity =>
+        modelBuilder.Entity<SuscripcionDetalle>(entity =>
         {
-            entity.HasKey(e => e.IdPlan).HasName("PK__planes__BECFB996B8019D10");
+            entity.HasKey(e => e.IdDetalle).HasName("PK__suscripc__49CAE2FBB5D7C758");
 
-            entity.ToTable("planes");
+            entity.ToTable("suscripcionDetalle");
 
-            entity.Property(e => e.IdPlan).HasColumnName("idPlan");
+            entity.Property(e => e.IdDetalle).HasColumnName("idDetalle");
             entity.Property(e => e.Activo)
                 .HasDefaultValue(true)
                 .HasColumnName("activo");
-            entity.Property(e => e.Descripcion)
-                .HasColumnType("text")
-                .HasColumnName("descripcion");
+            entity.Property(e => e.Concepto)
+                .IsRequired()
+                .HasMaxLength(200)
+                .HasColumnName("concepto");
             entity.Property(e => e.FechaCreacion)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("fechaCreacion");
-            entity.Property(e => e.Nombre)
+            entity.Property(e => e.FechaInicio)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("fechaInicio");
+            entity.Property(e => e.FechaVencimiento)
+                .HasColumnType("datetime")
+                .HasColumnName("fechaVencimiento");
+            entity.Property(e => e.IdSuscripcion).HasColumnName("idSuscripcion");
+            entity.Property(e => e.PrecioUnitario)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("precioUnitario");
+            entity.Property(e => e.TipoCobro)
                 .IsRequired()
-                .HasMaxLength(100)
-                .IsUnicode(false)
-                .HasColumnName("nombre");
-            entity.Property(e => e.PrecioAnual)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("precioAnual");
-            entity.Property(e => e.PrecioMensual)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("precioMensual");
+                .HasMaxLength(20)
+                .HasDefaultValue("mensual")
+                .HasColumnName("tipoCobro");
+
+            entity.HasOne(d => d.IdSuscripcionNavigation).WithMany(p => p.SuscripcionDetalles)
+                .HasForeignKey(d => d.IdSuscripcion)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_detalle_suscripcion");
         });
 
         modelBuilder.Entity<Suscripcione>(entity =>
         {
-            entity.HasKey(e => e.IdSuscripcion).HasName("PK__suscripc__B00C839B7B986DEA");
+            entity.HasKey(e => e.IdSuscripcion).HasName("PK__suscripc__B00C839BDBCD3583");
 
             entity.ToTable("suscripciones");
-
-            entity.HasIndex(e => e.IdCliente, "IX_suscripciones_cliente");
 
             entity.Property(e => e.IdSuscripcion).HasColumnName("idSuscripcion");
             entity.Property(e => e.EstadoSuscripcion)
                 .IsRequired()
                 .HasMaxLength(20)
-                .IsUnicode(false)
                 .HasDefaultValue("activa")
                 .HasColumnName("estadoSuscripcion");
             entity.Property(e => e.FechaCreacion)
@@ -470,21 +487,21 @@ public partial class ContabsvContext : DbContext
                 .HasColumnType("datetime")
                 .HasColumnName("fechaCreacion");
             entity.Property(e => e.FechaInicio)
+                .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("fechaInicio");
-            entity.Property(e => e.FechaVencimiento)
+            entity.Property(e => e.FechaModificacion)
                 .HasColumnType("datetime")
-                .HasColumnName("fechaVencimiento");
+                .HasColumnName("fechaModificacion");
             entity.Property(e => e.IdCliente).HasColumnName("idCliente");
-            entity.Property(e => e.IdPlan).HasColumnName("idPlan");
-            entity.Property(e => e.MontoSuscripcion)
-                .HasColumnType("decimal(10, 2)")
-                .HasColumnName("montoSuscripcion");
-            entity.Property(e => e.TipoSuscripcion)
-                .IsRequired()
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasColumnName("tipoSuscripcion");
+            entity.Property(e => e.PaypalSubscriptionId)
+                .HasMaxLength(100)
+                .HasColumnName("paypalSubscriptionId");
+
+            entity.HasOne(d => d.IdClienteNavigation).WithMany(p => p.Suscripciones)
+                .HasForeignKey(d => d.IdCliente)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_suscripciones_cliente");
         });
 
         modelBuilder.Entity<UsuariosFirebase>(entity =>

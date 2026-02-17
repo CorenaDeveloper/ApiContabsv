@@ -16,6 +16,4 @@ public partial class InvTiposProducto
     public bool? Estado { get; set; }
 
     public int? IdCliente { get; set; }
-
-    public virtual ICollection<InvProducto> InvProductos { get; set; } = new List<InvProducto>();
 }

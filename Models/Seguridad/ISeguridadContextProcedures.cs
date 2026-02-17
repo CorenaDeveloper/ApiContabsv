@@ -23,5 +23,6 @@ namespace ApiContabsv.Models.Seguridad
         Task<int> LogErrorAsync(string errorMessage, int? errorSeverity, int? errorState, string errorProcedure, int? errorLine, OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default);
         Task<List<LoginResult>> LoginAsync(string usuarioEmail, string password, OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default);
         Task<List<ManageUsuarioResult>> ManageUsuarioAsync(string usuarioData, OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default);
+        Task<int> sp_GetPermisosUsuarioAsync(int? idUsuario, OutputParameter<string> json, OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default);
     }
 }

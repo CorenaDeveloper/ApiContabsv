@@ -53,8 +53,6 @@ public partial class InvProducto
 
     public virtual InvMarca IdMarcaNavigation { get; set; }
 
-    public virtual InvTiposProducto IdTipoNavigation { get; set; }
-
     public virtual ICollection<InvMovimiento> InvMovimientos { get; set; } = new List<InvMovimiento>();
 
     public virtual ICollection<InvStock> InvStocks { get; set; } = new List<InvStock>();

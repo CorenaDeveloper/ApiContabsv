@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ApiContabsv.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     public class DBDte_UsersController : Controller
     {
         private readonly dteContext _context;
@@ -46,30 +46,21 @@ namespace ApiContabsv.Controllers
         {
             try
             {
-                var user = await _context.Users.FindAsync(id);
-                if (user == null)
-                    return NotFound("Usuario no encontrado");
-
-                return user;
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// OBTENER USUARIO POR NIT
-        /// </summary>
-        /// <param name="nit"></param>
-        /// <returns></returns>
-        [HttpGet("nit/{nit}")]
-        public async Task<ActionResult<User>> GetUserByNIT(string nit)
-        {
-            try
-            {
                 var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Nit == nit && u.Status == true);
+                    .Include(u => u.ParentUser)
+                    .Include(u => u.InverseParentUser)
+                    .Include(u => u.BranchOffices)
+                    //.Include(u => u.ContingencyDocuments)
+                    .Include(u => u.ControlNumberSequences)
+                    .Include(u => u.DteBalanceControls)
+                    .Include(u => u.DteBalanceTransactions)
+                    //.Include(u => u.DteDetails)
+                    //.Include(u => u.DteDocuments)
+                    .Include(u => u.FailedSequenceNumbers)
+                    .Include(u => u.NotificationUsers)
+                    .Include(u => u.SignerAssignments)
+                    .Include(u => u.UserNotifications)
+                    .FirstOrDefaultAsync(u => u.Id == id);
 
                 if (user == null)
                     return NotFound("Usuario no encontrado");
@@ -81,6 +72,30 @@ namespace ApiContabsv.Controllers
                 return StatusCode(500, $"Error interno: {ex.Message}");
             }
         }
+
+        ///// <summary>
+        ///// OBTENER USUARIO POR NIT
+        ///// </summary>
+        ///// <param name="nit"></param>
+        ///// <returns></returns>
+        //[HttpGet("nit/{nit}")]
+        //public async Task<ActionResult<User>> GetUserByNIT(string nit)
+        //{
+        //    try
+        //    {
+        //        var user = await _context.Users
+        //            .FirstOrDefaultAsync(u => u.Nit == nit && u.Status == true);
+
+        //        if (user == null)
+        //            return NotFound("Usuario no encontrado");
+
+        //        return user;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Error interno: {ex.Message}");
+        //    }
+        //}
 
 
         /// <summary>
@@ -258,62 +273,62 @@ namespace ApiContabsv.Controllers
         }
 
 
-        /// <summary>
-        /// LISTAR SUB-USUARIOS DE UN CLIENTE MASTER
-        /// </summary>
-        /// <param name="parentId"></param>
-        /// <returns></returns>
-        [HttpGet("{parentId}/sub-users")]
-        public async Task<ActionResult<IEnumerable<User>>> GetSubUsers(int parentId)
-        {
-            try
-            {
-                var subUsers = await _context.Users
-                    .Where(u => u.ParentUserId == parentId && u.Status == true)
-                    .ToListAsync();
+        ///// <summary>
+        ///// LISTAR SUB-USUARIOS DE UN CLIENTE MASTER
+        ///// </summary>
+        ///// <param name="parentId"></param>
+        ///// <returns></returns>
+        //[HttpGet("{parentId}/sub-users")]
+        //public async Task<ActionResult<IEnumerable<User>>> GetSubUsers(int parentId)
+        //{
+        //    try
+        //    {
+        //        var subUsers = await _context.Users
+        //            .Where(u => u.ParentUserId == parentId && u.Status == true)
+        //            .ToListAsync();
 
-                return subUsers;
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
+        //        return subUsers;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Error interno: {ex.Message}");
+        //    }
+        //}
 
-        /// <summary>
-        /// BUSCAR USUARIOS POR CRITERIO
-        /// </summary>
-        /// <param name="nit"></param>
-        /// <param name="commercialName"></param>
-        /// <param name="isMaster"></param>
-        /// <returns></returns>
-        [HttpGet("search")]
-        public async Task<ActionResult<IEnumerable<User>>> SearchUsers(
-            [FromQuery] string? nit = null,
-            [FromQuery] string? commercialName = null,
-            [FromQuery] bool? isMaster = null)
-        {
-            try
-            {
-                var query = _context.Users.Where(u => u.Status == true);
+        ///// <summary>
+        ///// BUSCAR USUARIOS POR CRITERIO
+        ///// </summary>
+        ///// <param name="nit"></param>
+        ///// <param name="commercialName"></param>
+        ///// <param name="isMaster"></param>
+        ///// <returns></returns>
+        //[HttpGet("search")]
+        //public async Task<ActionResult<IEnumerable<User>>> SearchUsers(
+        //    [FromQuery] string? nit = null,
+        //    [FromQuery] string? commercialName = null,
+        //    [FromQuery] bool? isMaster = null)
+        //{
+        //    try
+        //    {
+        //        var query = _context.Users.Where(u => u.Status == true);
 
-                if (!string.IsNullOrEmpty(nit))
-                    query = query.Where(u => u.Nit.Contains(nit));
+        //        if (!string.IsNullOrEmpty(nit))
+        //            query = query.Where(u => u.Nit.Contains(nit));
 
-                if (!string.IsNullOrEmpty(commercialName))
-                    query = query.Where(u => u.CommercialName.Contains(commercialName));
+        //        if (!string.IsNullOrEmpty(commercialName))
+        //            query = query.Where(u => u.CommercialName.Contains(commercialName));
 
-                if (isMaster.HasValue)
-                    query = query.Where(u => u.IsMaster == isMaster.Value);
+        //        if (isMaster.HasValue)
+        //            query = query.Where(u => u.IsMaster == isMaster.Value);
 
-                var results = await query.Take(50).ToListAsync(); // Limitar resultados
-                return results;
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
+        //        var results = await query.Take(50).ToListAsync(); // Limitar resultados
+        //        return results;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, $"Error interno: {ex.Message}");
+        //    }
+        //}
     }
 }
 

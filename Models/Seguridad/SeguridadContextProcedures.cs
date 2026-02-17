@@ -413,5 +413,41 @@ namespace ApiContabsv.Models.Seguridad
 
             return _;
         }
+
+        public virtual async Task<int> sp_GetPermisosUsuarioAsync(int? idUsuario, OutputParameter<string> json, OutputParameter<int> returnValue = null, CancellationToken cancellationToken = default)
+        {
+            var parameterjson = new SqlParameter
+            {
+                ParameterName = "json",
+                Size = -1,
+                Direction = System.Data.ParameterDirection.InputOutput,
+                Value = json?._value ?? Convert.DBNull,
+                SqlDbType = System.Data.SqlDbType.NVarChar,
+            };
+            var parameterreturnValue = new SqlParameter
+            {
+                ParameterName = "returnValue",
+                Direction = System.Data.ParameterDirection.Output,
+                SqlDbType = System.Data.SqlDbType.Int,
+            };
+
+            var sqlParameters = new []
+            {
+                new SqlParameter
+                {
+                    ParameterName = "IdUsuario",
+                    Value = idUsuario ?? Convert.DBNull,
+                    SqlDbType = System.Data.SqlDbType.Int,
+                },
+                parameterjson,
+                parameterreturnValue,
+            };
+            var _ = await _context.Database.ExecuteSqlRawAsync("EXEC @returnValue = [dbo].[sp_GetPermisosUsuario] @IdUsuario = @IdUsuario, @json = @json OUTPUT", sqlParameters, cancellationToken);
+
+            json?.SetValue(parameterjson.Value);
+            returnValue?.SetValue(parameterreturnValue.Value);
+
+            return _;
+        }
     }
 }

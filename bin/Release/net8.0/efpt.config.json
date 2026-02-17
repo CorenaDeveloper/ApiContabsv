@@ -1,13 +1,13 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "dteContext",
+   "ContextClassName": "ContabsvContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
    "MinimumProductVersion": "2.6.1186",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models\/Dte",
+   "OutputPath": "Models\/Contabsv",
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "ApiContabsv",
    "Schemas": null,
@@ -16,64 +16,80 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[addresses]",
+         "Name": "[dbo].[cliente]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[branch_offices]",
+         "Name": "[dbo].[historialPagos]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[contingency_document]",
+         "Name": "[dbo].[inv_categorias]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[control_number_sequence]",
+         "Name": "[dbo].[inv_marcas]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[domain_event]",
+         "Name": "[dbo].[inv_movimientos]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[dte_balance_control]",
+         "Name": "[dbo].[inv_productos]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[dte_balance_transaction]",
+         "Name": "[dbo].[inv_stock]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[dte_details]",
+         "Name": "[dbo].[inv_tipos_producto]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[dte_document]",
+         "Name": "[dbo].[suscripcionDetalle]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[failed_sequence_number]",
+         "Name": "[dbo].[suscripciones]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[notification_users]",
+         "Name": "[dbo].[UsuariosFirebase]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[signer_assignments]",
-         "ObjectType": 0
+         "Name": "[dbo].[vw_suscripciones_activas]",
+         "ObjectType": 3
       },
       {
-         "Name": "[dbo].[signers]",
-         "ObjectType": 0
+         "Name": "[dbo].[Crud_ClientexClt]",
+         "ObjectType": 1
       },
       {
-         "Name": "[dbo].[user_notifications]",
-         "ObjectType": 0
+         "Name": "[dbo].[Crud_DataCliente]",
+         "ObjectType": 1
       },
       {
-         "Name": "[dbo].[users]",
-         "ObjectType": 0
+         "Name": "[dbo].[Crud_Proveedores]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[DataCliente]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[ListaClintesInt]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[ListaProveedores]",
+         "ObjectType": 1
+      },
+      {
+         "Name": "[dbo].[sp_ListarExistencias]",
+         "ObjectType": 1
       }
    ],
    "UiHint": null,

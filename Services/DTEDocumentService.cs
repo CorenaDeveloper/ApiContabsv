@@ -1,6 +1,7 @@
 ﻿using ApiContabsv.DTO.DB_DteDTO;
 using ApiContabsv.Models.Dte;
 using Microsoft.EntityFrameworkCore;
+using System.Reflection.Metadata;
 using System.Text.Json;
 
 namespace ApiContabsv.Services
@@ -9,9 +10,9 @@ namespace ApiContabsv.Services
     {
         Task<int> SaveDocument(SaveDocumentRequest request);
         Task<bool> UpdateDocumentStatus(string dteId, string status, string? receptionStamp = null, string? errorMessage = null, string? errorDetails = null, string? haciendaResponse = null, string? responseCode = null);
-        Task<DTEDocumentResponse?> GetDocument(string dteId);
-        Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, DateTime? startDate = null, DateTime? endDate = null, string DocumentType = "");
-        Task<int> GetNextSequenceNumber(int userId, string documentType, string establishmentCode, string posCode);
+        Task<DTEDocumentResponse?> GetDocument(string dteId, int userdte, string ambiente);
+        Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, DateTime? startDate = null, DateTime? endDate = null, string DocumentType = "", string ambiente = "");
+        Task<int> GetNextSequenceNumber(int userId, string documentType, string establishmentCode, string posCode, string ambiente);
     }
 
     public class DTEDocumentService : IDTEDocumentService
@@ -54,14 +55,15 @@ namespace ApiContabsv.Services
                     Status = request.Status ?? "FIRMADO",
                     JsonContent = request.JsonContent,
                     CreatedAt = DateTime.Now,
-                    UpdatedAt = DateTime.Now
+                    UpdatedAt = DateTime.Now,
+                    Ambiente = request.Ambiente ?? ""
                 };
 
                 _context.DteDocuments.Add(dteDocument);
 
                 // 3. ACTUALIZAR SECUENCIA DE NÚMEROS DE CONTROL
                 await UpdateControlNumberSequence(request.UserId, request.DocumentType,
-                    request.EstablishmentCode ?? "0001", request.PosCode ?? "001");
+                    request.EstablishmentCode ?? "0001", request.PosCode ?? "001", request.Ambiente ?? "");
 
                 // 4. GUARDAR TODO
                 await _context.SaveChangesAsync();
@@ -112,13 +114,13 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<DTEDocumentResponse?> GetDocument(string dteId)
+        public async Task<DTEDocumentResponse?> GetDocument(string dteId, int userdte, string ambiente)
         {
             try
             {
                 var document = await _context.DteDocuments
                     .Include(d => d.User)
-                    .FirstOrDefaultAsync(d => d.DteId == dteId);
+                    .FirstOrDefaultAsync(d => d.DteId == dteId && d.UserId == userdte && d.Ambiente == ambiente);
 
                 if (document == null) return null;
 
@@ -137,7 +139,8 @@ namespace ApiContabsv.Services
                     TotalAmount = details?.TotalAmount ?? 0,
                     JsonContent = document.JsonContent,
                     CreatedAt = document.CreatedAt,
-                    UpdatedAt = document.UpdatedAt
+                    UpdatedAt = document.UpdatedAt,
+                    Ambiente = document.Ambiente
                 };
             }
             catch (Exception ex)
@@ -146,14 +149,13 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, DateTime? startDate = null, DateTime? endDate = null, string DocumentType = "")
+        public async Task<List<DTEDocumentResponse>> GetDocumentsByUser(int userId, DateTime? startDate = null, DateTime? endDate = null, string DocumentType = "", string ambiente = "")
         {
             try
             {
 
-                // Query base
                 var query = _context.DteDocuments
-                    .Where(d => d.UserId == userId && d.DocumentType == DocumentType);
+                    .Where(d => d.UserId == userId && d.DocumentType == DocumentType && d.Ambiente == ambiente);
 
                 // AGREGAR FILTROS POR FECHA
                 if (startDate.HasValue)
@@ -163,7 +165,6 @@ namespace ApiContabsv.Services
 
                 if (endDate.HasValue)
                 {
-                    // Agregar un día completo hasta las 23:59:59
                     var endOfDay = endDate.Value.Date.AddDays(1).AddTicks(-1);
                     query = query.Where(d => d.CreatedAt <= endOfDay);
                 }
@@ -185,7 +186,8 @@ namespace ApiContabsv.Services
                         ErrorMessage = d.ErrorMessage,
                         HaciendaResponse = d.HaciendaResponse,
                         ResponseCode = d.ResponseCode,
-                        ReceptionStamp = d.ReceptionStamp
+                        ReceptionStamp = d.ReceptionStamp,
+                        Ambiente = d.Ambiente
                     })
                     .ToListAsync();
 
@@ -213,7 +215,8 @@ namespace ApiContabsv.Services
             }
         }
 
-        public async Task<int> GetNextSequenceNumber(int userId, string documentType, string establishmentCode, string posCode)
+        // Obtener el siguiente número de secuencia para un usuario y tipo de documento específico en cada ambiente 
+        public async Task<int> GetNextSequenceNumber(int userId, string documentType, string establishmentCode, string posCode, string ambiente)
         {
             try
             {
@@ -224,11 +227,11 @@ namespace ApiContabsv.Services
                                            && s.DocumentType == documentType
                                            && s.EstablishmentCode == establishmentCode
                                            && s.PosCode == posCode
-                                           && s.Year == currentYear);
+                                           && s.Year == currentYear
+                                           && s.Ambiente == ambiente);
 
                 if (sequence == null)
                 {
-                    // Crear nueva secuencia para este año
                     sequence = new ControlNumberSequence
                     {
                         UserId = userId,
@@ -238,7 +241,8 @@ namespace ApiContabsv.Services
                         SequenceNumber = 1,
                         Year = currentYear,
                         CreatedAt = DateTime.Now,
-                        UpdatedAt = DateTime.Now
+                        UpdatedAt = DateTime.Now,
+                        Ambiente = ambiente
                     };
 
                     _context.ControlNumberSequences.Add(sequence);
@@ -254,7 +258,7 @@ namespace ApiContabsv.Services
             }
         }
 
-        private async Task UpdateControlNumberSequence(int userId, string documentType, string establishmentCode, string posCode)
+        private async Task UpdateControlNumberSequence(int userId, string documentType, string establishmentCode, string posCode, string ambiente)
         {
             var currentYear = DateTime.Now.Year;
 
@@ -263,7 +267,8 @@ namespace ApiContabsv.Services
                                        && s.DocumentType == documentType
                                        && s.EstablishmentCode == establishmentCode
                                        && s.PosCode == posCode
-                                       && s.Year == currentYear);
+                                       && s.Year == currentYear
+                                       && s.Ambiente == ambiente); 
 
             if (sequence != null)
             {
@@ -271,7 +276,6 @@ namespace ApiContabsv.Services
                 sequence.UpdatedAt = DateTime.Now;
             }
         }
-
         private JsonElement AddReceptionStampToJson(JsonElement originalJson, string receptionStamp)
         {
             var jsonDict = JsonSerializer.Deserialize<Dictionary<string, object>>(originalJson.GetRawText());

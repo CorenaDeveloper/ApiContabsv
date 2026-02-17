@@ -21,7 +21,13 @@ public partial class HistorialPago
 
     public string EstadoPago { get; set; }
 
-    public string NumeroFactura { get; set; }
+    public string DetallePago { get; set; }
 
-    public DateTime FechaCreacion { get; set; }
+    public string PaypalPaymentId { get; set; }
+
+    public DateTime? FechaCreacion { get; set; }
+
+    public virtual Cliente IdClienteNavigation { get; set; }
+
+    public virtual Suscripcione IdSuscripcionNavigation { get; set; }
 }

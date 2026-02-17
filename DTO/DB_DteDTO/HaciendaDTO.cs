@@ -14,6 +14,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? JsonContent { get; set; }
         public string? EstablishmentCode { get; set; }
         public string? PosCode { get; set; }
+        public string? Ambiente { get; set; }
     }
 
     public class DTEDocumentResponse
@@ -34,6 +35,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? HaciendaResponse { get; set; }
         public string? ResponseCode { get; set; }
         public string? ReceptionStamp { get; set; }
+        public string? Ambiente { get; set; }
     }
 
     public class HaciendaTransmissionResult

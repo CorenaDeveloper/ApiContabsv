@@ -176,6 +176,10 @@ public partial class dteContext : DbContext
             entity.ToTable("control_number_sequence");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Ambiente)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("ambiente");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("created_at");
@@ -330,6 +334,10 @@ public partial class dteContext : DbContext
             entity.ToTable("dte_document");
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Ambiente)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("ambiente");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnName("created_at");
@@ -537,6 +545,10 @@ public partial class dteContext : DbContext
             entity.HasIndex(e => e.Nit, "UQ__users__DF97D0E4382D3EB3").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Ambiente)
+                .HasMaxLength(5)
+                .IsUnicode(false)
+                .HasColumnName("ambiente");
             entity.Property(e => e.AuthType)
                 .IsRequired()
                 .HasMaxLength(15)

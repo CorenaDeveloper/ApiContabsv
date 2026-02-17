@@ -1,0 +1,10 @@
+2026-01-27 14:14:26.208 -06:00 [INF] 🚀 Iniciando aplicación ApiContabsv
+2026-01-27 14:14:27.901 -06:00 [INF] ✅ Aplicación configurada correctamente
+2026-01-27 14:14:28.318 -06:00 [INF] Now listening on: https://localhost:7189
+2026-01-27 14:14:28.327 -06:00 [INF] Now listening on: http://localhost:5241
+2026-01-27 14:14:28.477 -06:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-01-27 14:14:28.478 -06:00 [INF] Hosting environment: Development
+2026-01-27 14:14:28.480 -06:00 [INF] Content root path: C:\Users\programador04\Documents\GitHub\ApiContabsv
+2026-01-27 14:14:29.766 -06:00 [INF] Request starting HTTP/2 GET https://localhost:7189/swagger - null null
+2026-01-27 14:14:30.061 -06:00 [INF] HTTP GET /swagger responded 401 in 100.1587 ms
+2026-01-27 14:14:30.076 -06:00 [INF] Request finished HTTP/2 GET https://localhost:7189/swagger - 401 null null 318.9945ms

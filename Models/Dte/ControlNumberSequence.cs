@@ -25,5 +25,7 @@ public partial class ControlNumberSequence
 
     public DateTime? UpdatedAt { get; set; }
 
+    public string Ambiente { get; set; }
+
     public virtual User User { get; set; }
 }

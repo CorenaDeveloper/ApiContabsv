@@ -33,5 +33,7 @@ public partial class DteDocument
 
     public string ReceptionStamp { get; set; }
 
+    public string Ambiente { get; set; }
+
     public virtual User User { get; set; }
 }

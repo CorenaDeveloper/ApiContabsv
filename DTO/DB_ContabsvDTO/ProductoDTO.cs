@@ -20,7 +20,7 @@
         public decimal? Peso { get; set; }
         public decimal? Volumen { get; set; }
         public string UnidadMedida { get; set; } = "";
-        public string Imagen { get; set; } = "";
+        public string? Imagen { get; set; } = "";
         public string Sku { get; set; } = "";
         public string nombreMarca { get; set; } = "";
         public string nombreCategoria { get; set; } = "";

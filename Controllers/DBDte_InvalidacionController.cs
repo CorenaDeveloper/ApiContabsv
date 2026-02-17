@@ -41,11 +41,14 @@ namespace ApiContabsv.Controllers
         /// OBTENER DOCUMENTO POR DTE ID
         /// </summary>
         [HttpGet("Confirmacion/{dteId}")]
-        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(string dteId)
+        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(
+            string dteId,
+            int userdte,
+            string ambiente)
         {
             try
             {
-                var document = await _documentService.GetDocument(dteId);
+                var document = await _documentService.GetDocument(dteId, userdte, ambiente);
                 if (document == null)
                     return NotFound("Documento no encontrado");
 

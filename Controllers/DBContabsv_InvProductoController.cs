@@ -65,7 +65,8 @@ namespace ApiContabsv.Controllers
                             .Where(t => t.IdTipo == c.IdTipo)
                             .Select(t => t.Nombre)
                             .FirstOrDefault(),
-                         c.TipoItemId
+                        c.TipoItemId,
+                        nombreTipoItem = c.TipoItemId == 2 ? "Servicio" : c.TipoItemId == 1 ? "Bienes" : c.TipoItemId == 3 ? "Ambos (Servicio/Producto)": "N/A"
 
                     }).ToListAsync();
 

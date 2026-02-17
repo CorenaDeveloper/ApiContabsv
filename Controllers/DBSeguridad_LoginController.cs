@@ -63,7 +63,8 @@ namespace ApiContabsv.Controllers
                     u.Estado,
                     c.IdCliente,
                     c.PersonaJuridica,
-                    c.UserDte
+                    c.UserDte,
+                    c.Ambiente
                 };
 
                 return Ok(r);

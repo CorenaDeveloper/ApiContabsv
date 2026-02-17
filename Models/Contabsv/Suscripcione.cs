@@ -11,17 +11,19 @@ public partial class Suscripcione
 
     public int IdCliente { get; set; }
 
-    public int IdPlan { get; set; }
-
-    public string TipoSuscripcion { get; set; }
-
     public string EstadoSuscripcion { get; set; }
 
     public DateTime FechaInicio { get; set; }
 
-    public DateTime? FechaVencimiento { get; set; }
+    public string PaypalSubscriptionId { get; set; }
 
-    public decimal MontoSuscripcion { get; set; }
+    public DateTime? FechaCreacion { get; set; }
 
-    public DateTime FechaCreacion { get; set; }
+    public DateTime? FechaModificacion { get; set; }
+
+    public virtual ICollection<HistorialPago> HistorialPagos { get; set; } = new List<HistorialPago>();
+
+    public virtual Cliente IdClienteNavigation { get; set; }
+
+    public virtual ICollection<SuscripcionDetalle> SuscripcionDetalles { get; set; } = new List<SuscripcionDetalle>();
 }

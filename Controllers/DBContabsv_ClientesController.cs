@@ -16,7 +16,10 @@ namespace ApiContabsv.Controllers
         }
 
 
-        // 🔵 LISTAR TODOS LOS CLIENTES
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns></returns>
         [HttpGet("Clientes")]
         public async Task<ActionResult<IEnumerable<Cliente>>> GetClientes()
         {
@@ -33,7 +36,11 @@ namespace ApiContabsv.Controllers
            
         }
 
-        // 🔵 CLIENTE POR ID
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpGet("Clientes/{id}")]
         public async Task<ActionResult<Cliente>> GetCliente(int id)
         {
@@ -52,7 +59,11 @@ namespace ApiContabsv.Controllers
 
         }
 
-        // ⚫ CREAR CLIENTE (POST)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="cliente"></param>
+        /// <returns></returns>
         [HttpPost("Clientes")]
         public async Task<ActionResult<Cliente>> PostCliente(Cliente cliente)
         {
@@ -83,7 +94,6 @@ namespace ApiContabsv.Controllers
             {
                 return BadRequest("El ID del cliente no coincide.");
             }
-
             try
             {
                 // Obtener el cliente existente
@@ -93,30 +103,32 @@ namespace ApiContabsv.Controllers
                     return NotFound("Cliente no encontrado.");
                 }
 
-                // Actualizar solo los campos que vienen en el request (no nulls)
-                clienteExistente.Nombres = clienteActualizado.Nombres ?? clienteExistente.Nombres;
-                clienteExistente.Apellidos = clienteActualizado.Apellidos ?? clienteExistente.Apellidos;
+                // Actualizar solo los campos que vienen en el request (no nulls ni vacíos)
+                clienteExistente.Nombres = !string.IsNullOrEmpty(clienteActualizado.Nombres) ? clienteActualizado.Nombres : clienteExistente.Nombres;
+                clienteExistente.Apellidos = !string.IsNullOrEmpty(clienteActualizado.Apellidos) ? clienteActualizado.Apellidos : clienteExistente.Apellidos;
                 clienteExistente.PersonaJuridica = clienteActualizado.PersonaJuridica;
-                clienteExistente.NombreRazonSocial = clienteActualizado.NombreRazonSocial ?? clienteExistente.NombreRazonSocial;
-                clienteExistente.NombreComercial = clienteActualizado.NombreComercial ?? clienteExistente.NombreComercial;
-                clienteExistente.DuiCliente = clienteActualizado.DuiCliente ?? clienteExistente.DuiCliente;
-                clienteExistente.RepresentanteLegal = clienteActualizado.RepresentanteLegal ?? clienteExistente.RepresentanteLegal;
-                clienteExistente.DuiRepresentanteLegal = clienteActualizado.DuiRepresentanteLegal ?? clienteExistente.DuiRepresentanteLegal;
-                clienteExistente.TelefonoCliente = clienteActualizado.TelefonoCliente ?? clienteExistente.TelefonoCliente;
-                clienteExistente.Celular = clienteActualizado.Celular ?? clienteExistente.Celular;
-                clienteExistente.Nrc = clienteActualizado.Nrc ?? clienteExistente.Nrc;
-                clienteExistente.NitCliente = clienteActualizado.NitCliente ?? clienteExistente.NitCliente;
-                clienteExistente.Direccion = clienteActualizado.Direccion ?? clienteExistente.Direccion;
-                clienteExistente.Correo = clienteActualizado.Correo ?? clienteExistente.Correo;
-                clienteExistente.TipoContribuyente = clienteActualizado.TipoContribuyente ?? clienteExistente.TipoContribuyente;
+                clienteExistente.NombreRazonSocial = !string.IsNullOrEmpty(clienteActualizado.NombreRazonSocial) ? clienteActualizado.NombreRazonSocial : clienteExistente.NombreRazonSocial;
+                clienteExistente.NombreComercial = !string.IsNullOrEmpty(clienteActualizado.NombreComercial) ? clienteActualizado.NombreComercial : clienteExistente.NombreComercial;
+                clienteExistente.DuiCliente = !string.IsNullOrEmpty(clienteActualizado.DuiCliente) ? clienteActualizado.DuiCliente : clienteExistente.DuiCliente;
+                clienteExistente.RepresentanteLegal = !string.IsNullOrEmpty(clienteActualizado.RepresentanteLegal) ? clienteActualizado.RepresentanteLegal : clienteExistente.RepresentanteLegal;
+                clienteExistente.DuiRepresentanteLegal = !string.IsNullOrEmpty(clienteActualizado.DuiRepresentanteLegal) ? clienteActualizado.DuiRepresentanteLegal : clienteExistente.DuiRepresentanteLegal;
+                clienteExistente.TelefonoCliente = !string.IsNullOrEmpty(clienteActualizado.TelefonoCliente) ? clienteActualizado.TelefonoCliente : clienteExistente.TelefonoCliente;
+                clienteExistente.Celular = !string.IsNullOrEmpty(clienteActualizado.Celular) ? clienteActualizado.Celular : clienteExistente.Celular;
+                clienteExistente.Nrc = !string.IsNullOrEmpty(clienteActualizado.Nrc) ? clienteActualizado.Nrc : clienteExistente.Nrc;
+                clienteExistente.NitCliente = !string.IsNullOrEmpty(clienteActualizado.NitCliente) ? clienteActualizado.NitCliente : clienteExistente.NitCliente;
+                clienteExistente.Direccion = !string.IsNullOrEmpty(clienteActualizado.Direccion) ? clienteActualizado.Direccion : clienteExistente.Direccion;
+                clienteExistente.Correo = !string.IsNullOrEmpty(clienteActualizado.Correo) ? clienteActualizado.Correo : clienteExistente.Correo;
+                clienteExistente.TipoContribuyente = !string.IsNullOrEmpty(clienteActualizado.TipoContribuyente) ? clienteActualizado.TipoContribuyente : clienteExistente.TipoContribuyente;
                 clienteExistente.IdActividadEconomica = clienteActualizado.IdActividadEconomica ?? clienteExistente.IdActividadEconomica;
                 clienteExistente.IdDepartamento = clienteActualizado.IdDepartamento ?? clienteExistente.IdDepartamento;
                 clienteExistente.IdMunicipio = clienteActualizado.IdMunicipio ?? clienteExistente.IdMunicipio;
-                clienteExistente.ApiKey = clienteActualizado.ApiKey ?? clienteExistente.ApiKey;
-                clienteExistente.ApiSecret = clienteActualizado.ApiSecret ?? clienteExistente.ApiSecret;
-                clienteExistente.UserHacienda = clienteActualizado.UserHacienda ?? clienteExistente.UserHacienda;
-                clienteExistente.PassHacienda = clienteActualizado.PassHacienda ?? clienteExistente.PassHacienda;
-
+                clienteExistente.ApiKey = !string.IsNullOrEmpty(clienteActualizado.ApiKey) ? clienteActualizado.ApiKey : clienteExistente.ApiKey;
+                clienteExistente.ApiSecret = !string.IsNullOrEmpty(clienteActualizado.ApiSecret) ? clienteActualizado.ApiSecret : clienteExistente.ApiSecret;
+                clienteExistente.UserHacienda = !string.IsNullOrEmpty(clienteActualizado.UserHacienda) ? clienteActualizado.UserHacienda : clienteExistente.UserHacienda;
+                clienteExistente.PassHacienda = !string.IsNullOrEmpty(clienteActualizado.PassHacienda) ? clienteActualizado.PassHacienda : clienteExistente.PassHacienda;
+                clienteExistente.Ambiente = !string.IsNullOrEmpty(clienteActualizado.Ambiente) ? clienteActualizado.Ambiente : clienteExistente.Ambiente;
+                clienteExistente.UserDte = clienteActualizado.UserDte ?? clienteExistente.UserDte;  
+                clienteExistente.Imagen = !string.IsNullOrEmpty(clienteActualizado.Imagen) ? clienteActualizado.Imagen : clienteExistente.Imagen;
                 // Campos boolean - actualizar solo si vienen definidos
                 if (clienteActualizado.IsDeclarante != null)
                     clienteExistente.IsDeclarante = clienteActualizado.IsDeclarante;
@@ -124,7 +136,6 @@ namespace ApiContabsv.Controllers
                     clienteExistente.IsDte = clienteActualizado.IsDte;
 
                 // NO tocar: Token, FechaRegistro, EstadoCliente
-
                 await contabsv_context.SaveChangesAsync();
                 return NoContent();
             }
@@ -134,7 +145,11 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        // ⚫ ELIMINAR CLIENTE (DELETE)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("Clientes/{id}")]
         public async Task<IActionResult> DeleteCliente(int id)
         {
@@ -154,11 +169,6 @@ namespace ApiContabsv.Controllers
             {
                 return StatusCode(500, $"Error interno: {ex.Message}");
             }
-        }
-
-        private bool ClienteExists(int id)
-        {
-            return contabsv_context.Clientes.Any(e => e.IdCliente == id);
         }
     }
 }

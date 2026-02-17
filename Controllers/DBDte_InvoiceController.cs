@@ -36,7 +36,83 @@ namespace ApiContabsv.Controllers
         }
 
         /// <summary>
-        /// CREAR FACTURA ELECTRONICA 
+        /// Creando una factura electronica
+        /// Ejemplo de request:
+        /// {
+        ///  "clientId": 5, (Este aplica solo si es usuario de contabsv de lo contrario puede ir null)
+        ///  "userId": 6, (user_id de de apis para facturacion electronica)
+        ///  "branchOfficeId": 1002, (ID de la sucursal que emite la factura)
+        ///  "items": [
+        ///    {
+        ///      "type": 1,
+        ///      "description": "CODO PVC 3/4",
+        ///      "quantity": 12,
+        ///      "unit_measure": 59,
+        ///      "unit_price": 0.65,
+        ///      "discount": 0,
+        ///      "code": "COD1",
+        ///      "non_subject_sale": 0,
+        ///      "exempt_sale": 0,
+        ///      "taxed_sale": 7.8,
+        ///      "suggested_price": 0,
+        ///      "non_taxed": 0,
+        ///      "iva_item": 0.9
+        ///    },
+        ///    {
+        ///      "type": 1,
+        ///      "description": "CODO PVC 1",
+        ///      "quantity": 123,
+        ///      "unit_measure": 59,
+        ///      "unit_price": 0.75,
+        ///      "discount": 0,
+        ///      "code": "COD2",
+        ///      "non_subject_sale": 0,
+        ///      "exempt_sale": 0,
+        ///      "taxed_sale": 92.25,
+        ///      "suggested_price": 0,
+        ///      "non_taxed": 0,
+        ///      "iva_item": 10.61
+        ///    }
+        ///  ],
+        /// "receiver": {
+        /// "document_type": "13", (NIT = 36, CARNET DE EXTRANJERIA = 02, PASAPORTE = 03, DUI = 13, OTROS = 37)
+        /// "document_number": "05128459-6",
+        /// "name": "MAURICIO CORENA",
+        /// "address": {
+        /// "department": "08",
+        /// "municipality": "23",
+        /// "complement": "SOYAPANGO, SAN SALVADOR"
+        ///    },
+        /// "phone": "6102 2136",
+        /// "email": "corenaDeveloper@gmail.com"
+        ///  },
+        /// "summary": {
+        /// "total_non_subject": 0,
+        /// "total_exempt": 0,
+        /// "total_taxed": 100.05,
+        /// "sub_total": 100.05,
+        /// "non_subject_discount": 0,
+        /// "exempt_discount": 0,
+        /// "taxed_discount": 0,
+        /// "discount_percentage": 0,
+        /// "total_discount": 0,
+        /// "sub_total_sales": 100.05,
+        /// "total_operation": 100.05,
+        /// "total_non_taxed": 0,
+        /// "total_to_pay": 100.05,
+        /// "operation_condition": 1,
+        /// "iva_retention": 0,
+        /// "total_iva": 11.51,
+        /// "payment_types": [
+        ///      {
+        /// "code": "01",
+        /// "amount": 100.05
+        ///      }
+        ///    ]
+        ///  },
+        /// "environment": "00", (Ambiente 00 - Pruebas, 01 - Producción)
+        /// "sendToHacienda": true(Importante para saber si se envia o no a hacienda)
+        ///}
         /// </summary>
         [HttpPost]
         public async Task<ActionResult> CreateInvoice([FromBody] CreateInvoiceRequestDTO request)
@@ -45,34 +121,50 @@ namespace ApiContabsv.Controllers
 
             try
             {
-                // 1. OBTENER DATOS DEL USER (EMISOR)
-                var user = await _context.Users.FindAsync(request.ClientId);
+                // 1. Obtenemos los datos del usuario emisor
+                var user = await _context.Users.FindAsync(request.UserId);
                 if (user == null)
-                    return BadRequest($"Usuario con ID {request.ClientId} no encontrado");
+                    return BadRequest($"Usuario DTE {request.UserId} no encontrado");
 
-                // 2. OBTENER FIRMADOR ÓPTIMO
+                // 2. validar que la sucursal pertenezca al usuario
+                var branchOffice = await _context.BranchOffices
+                                   .Include(b => b.Addresses)  // Si tienes relación con direcciones
+                                   .FirstOrDefaultAsync(b => b.Id == request.BranchOfficeId
+                                    && b.UserId == user.Id
+                                    && b.IsActive);
+
+                if (branchOffice == null)
+                    return BadRequest($"Sucursal con ID {request.BranchOfficeId} no encontrada o inactiva");
+
+                // 3. obtener el firmador optimo para el usuario
                 var optimalSigner = await GetOptimalSignerForUser(request.UserId);
                 if (optimalSigner == null)
                     return BadRequest("No hay firmadores disponibles para el usuario");
 
-                // 3. VERIFICAR CERTIFICADO
+                // 4. verificamos que el certificado exista
                 var certificatePath = Path.Combine(optimalSigner.CertificatePath, $"{user.Nit}.crt");
                 if (!System.IO.File.Exists(certificatePath))
                     return BadRequest($"Certificado no encontrado para NIT: {user.Nit}");
 
-                // 4. GENERAR NÚMERO DE CONTROL ÚNICO
+                // 5. generamos un numero de control interno valido
+                var establishmentCode = branchOffice.EstablishmentCode ?? "";
+                var posCode = branchOffice.PosCode ?? "";
+
+                // 6. Obtener el siguiente número de secuencia
+                // para el tipo de documento 01 (Factura)
                 var sequenceNumber = await _documentService.GetNextSequenceNumber(
-                    user.Id, "01", "0001", "001");
+                    user.Id, "01", establishmentCode, posCode, request.Environment ?? "00");
 
-                var controlNumber = $"DTE-01-M001P000-{DateTime.Now.Year}{sequenceNumber:00000000000}";
+                var controlNumber = $"DTE-01-{establishmentCode}{posCode}-{DateTime.Now.Year}{sequenceNumber:00000000000}";
 
-                // 5. GENERAR DTE ID ÚNICO
+                // 7. Generamos un DTE unico
                 dteId = Guid.NewGuid().ToString().ToUpper();
 
-                // 6. CONSTRUIR DOCUMENTO DTE
-                var dteDocument = BuildDTEDocument(user, request, controlNumber, dteId);
+                // 8.Contruir documento dete con datos de la sucursal, usuario y request
+                // Crear el documento DTE como factura consumidor final
+                var dteDocument = BuildDTEDocument(user, branchOffice, request, controlNumber, dteId, "01");
 
-                // 7. FIRMAR DOCUMENTO
+                // 9. Firmador de documento
                 var signResult = await SignDocument(user, dteDocument, optimalSigner);
                 if (!signResult.Success)
                 {
@@ -84,7 +176,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 8. EXTRAER JWT FIRMADO
+                // 10. extraer JWT firmador
                 var signedJWT = ExtractJWTFromSignerResponse(signResult.Response);
                 if (string.IsNullOrEmpty(signedJWT))
                 {
@@ -95,7 +187,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 9. GUARDAR EN BASE DE DATOS (ANTES DE ENVIAR)
+                // 11. Guardamos en la base de datatos datos antes de enviar 
                 var saveRequest = new SaveDocumentRequest
                 {
                     DteId = dteId,
@@ -106,13 +198,14 @@ namespace ApiContabsv.Controllers
                     TotalAmount = request.Summary?.TotalToPay ?? 0,
                     Status = "FIRMADO",
                     JsonContent = JsonSerializer.Serialize(dteDocument),
-                    EstablishmentCode = "0001",
-                    PosCode = "001"
+                    EstablishmentCode = establishmentCode,  
+                    PosCode = posCode,                     
+                    Ambiente = request.Environment ?? ""   
                 };
 
                 var documentId = await _documentService.SaveDocument(saveRequest);
 
-                // 10. ENVIAR A HACIENDA Y ACTUALIZAR ESTADO CORRECTAMENTE
+                // 12. Enviamos hacienda (Transmision) y actualizamos estado segun la repuesta
                 HaciendaTransmissionResult? transmissionResult = null;
                 string finalDocumentStatus = "FIRMADO"; // Estado por defecto si no se envía
 
@@ -120,12 +213,11 @@ namespace ApiContabsv.Controllers
                 {
                     transmissionResult = await _haciendaService.TransmitDocument(signedJWT, 
                         user.Nit, 
-                        request.Environment ?? "00", 
+                        request.Environment ?? "", 
                         "01",
                         1
                         );
 
-                    // ✅ LÓGICA CORREGIDA BASADA EN GO:
                     if (transmissionResult != null)
                     {
                         string errorMessage = null;
@@ -162,12 +254,9 @@ namespace ApiContabsv.Controllers
                             errorDetails,
                             transmissionResult.RawResponse,
                             responseCode);
-
-                        _logger.LogInformation($"Documento {dteId} actualizado a estado: {finalDocumentStatus}");
                     }
                     else
                     {
-                        _logger.LogError($"transmissionResult es null para documento {dteId}");
                         finalDocumentStatus = "ERROR_TRANSMISION";
 
                         await _documentService.UpdateDocumentStatus(
@@ -182,7 +271,7 @@ namespace ApiContabsv.Controllers
                 }
                 
 
-                // 11. RESPUESTA EXITOSA ESTRUCTURADA
+                // 13. Respuesta exitosa
                 var response = new
                 {
                     success = true,
@@ -208,7 +297,7 @@ namespace ApiContabsv.Controllers
                         },
                         document = new
                         {
-                            status = finalDocumentStatus, //  Estado real del documento
+                            status = finalDocumentStatus, 
                             createdAt = DateTime.Now,
                             totalAmount = saveRequest.TotalAmount
                         }
@@ -220,7 +309,6 @@ namespace ApiContabsv.Controllers
             }
             catch (Exception ex)
             {
-                // Si tenemos un dteId y falló después del guardado, marcar como error
                 if (!string.IsNullOrEmpty(dteId))
                 {
                     try
@@ -249,11 +337,14 @@ namespace ApiContabsv.Controllers
         /// OBTENER DOCUMENTO POR DTE ID
         /// </summary>
         [HttpGet("{dteId}")]
-        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(string dteId)
+        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(
+            string dteId, 
+            int userdte, 
+            string ambiente)
         {
             try
             {
-                var document = await _documentService.GetDocument(dteId);
+                var document = await _documentService.GetDocument(dteId, userdte, ambiente);
                 if (document == null)
                     return NotFound("Documento no encontrado");
 
@@ -261,7 +352,6 @@ namespace ApiContabsv.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo documento {DteId}", dteId);
                 return StatusCode(500, "Error interno obteniendo documento");
             }
         }
@@ -270,7 +360,11 @@ namespace ApiContabsv.Controllers
         /// LISTAR DOCUMENTOS DE UN USUARIO
         /// </summary>
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(int userId, [FromQuery] string? startDate = null, [FromQuery] string? endDate = null)
+        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(
+            int userId, 
+            [FromQuery] string? startDate = null, 
+            [FromQuery] string? endDate = null, 
+            string ambiente = "")
         {
             try
             {
@@ -281,18 +375,15 @@ namespace ApiContabsv.Controllers
                 {
                     parsedStartDate = start;
                 }
-
                 if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
                 {
                     parsedEndDate = end;
                 }
-
-                var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate,  "01");
+                var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate,  "01", ambiente);
                 return Ok(documents);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo documentos del usuario {UserId}", userId);
                 return StatusCode(500, "Error interno obteniendo documentos");
             }
         }
@@ -395,16 +486,16 @@ namespace ApiContabsv.Controllers
             return null;
         }
 
-        private object BuildDTEDocument(User user, CreateInvoiceRequestDTO request, string controlNumber, string dteId)
+        private object BuildDTEDocument(User user, BranchOffice branchOffice, CreateInvoiceRequestDTO request, string controlNumber, string dteId, string tipoDocumento)
         {
             return new
             {
-                //  SECCIÓN IDENTIFICACION (TODO LO QUE ESTABA EN RAÍZ)
+                //  seccion de indentificacion de documento 
                 identificacion = new
                 {
                     version = 1,
-                    ambiente = request.Environment ?? "00",
-                    tipoDte = "01",
+                    ambiente = request.Environment ?? "",
+                    tipoDte = tipoDocumento,
                     numeroControl = controlNumber,
                     codigoGeneracion = dteId,
                     tipoModelo = request.ModelType ?? 1,
@@ -417,7 +508,7 @@ namespace ApiContabsv.Controllers
                 },
 
                 // SECCIONES PRINCIPALES
-                emisor = MapEmisorFromUser(user),
+                emisor = MapEmisorFromBranchOffice(user, branchOffice),
                 receptor = MapReceptor(request.Receiver),
                 cuerpoDocumento = MapItems(request.Items),
                 resumen = MapResumen(request.Summary),
@@ -431,8 +522,26 @@ namespace ApiContabsv.Controllers
             };
         }
 
-        private object MapEmisorFromUser(User user)
+        private object MapEmisorFromBranchOffice(User user, BranchOffice branchOffice)
         {
+            // Obtener la dirección de la sucursal - ES OBLIGATORIA
+            var address = branchOffice.Addresses?.FirstOrDefault();
+            if (address == null)
+            {
+                throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene dirección configurada");
+            }
+
+            // Validar que los códigos de establecimiento existan
+            if (string.IsNullOrEmpty(branchOffice.EstablishmentCode))
+            {
+                throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene código de establecimiento configurado");
+            }
+
+            if (string.IsNullOrEmpty(branchOffice.PosCode))
+            {
+                throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene código de punto de venta configurado");
+            }
+
             return new
             {
                 nit = user.Nit,
@@ -441,22 +550,23 @@ namespace ApiContabsv.Controllers
                 codActividad = user.EconomicActivity,
                 descActividad = user.EconomicActivityDesc,
                 nombreComercial = user.CommercialName,
-                tipoEstablecimiento = "02",
-                // DATOS HARDCODEADOS DEL ID 5
-                codEstable = "M001",
-                codPuntoVenta = "P000",
+                tipoEstablecimiento = branchOffice.EstablishmentType,
+                codEstable = branchOffice.EstablishmentCode,
+                codPuntoVenta = branchOffice.PosCode,
                 direccion = new
                 {
-                    departamento = "03",
-                    municipio = "18",
-                    complemento = "Barrio el Ángel, calle el Ángel, casa 26 Sonsonate"
+                    departamento = address.Department,
+                    municipio = address.Municipality,
+                    complemento = address.Address1 + (string.IsNullOrEmpty(address.Complement) ? "" : ", " + address.Complement)
                 },
-                telefono = "61032136",
-                correo = "corenadeveloper@gmail.com",
-                codEstableMH = "M001",
-                codPuntoVentaMH = "M001"  // ✅ 4 caracteres
+
+                telefono = branchOffice.Phone ?? user.Phone,
+                correo = branchOffice.Email ?? user.Email,
+                codEstableMH = branchOffice.EstablishmentCodeMh ?? branchOffice.EstablishmentCode,
+                codPuntoVentaMH = branchOffice.PosCodeMh ?? branchOffice.PosCode
             };
         }
+
         private object MapReceptor(ReceiverRequestDTO? receiver)
         {
             if (receiver == null) return null;
@@ -485,7 +595,7 @@ namespace ApiContabsv.Controllers
             return items.Select((item, index) => new
             {
                 numItem = index + 1,
-                tipoItem = 2,  // Cambiar de 1 a 2 (Servicios)
+                tipoItem = item.Type,
                 descripcion = item.Description,
                 cantidad = item.Quantity,
                 uniMedida = item.UnitMeasure,

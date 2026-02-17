@@ -56,7 +56,7 @@ try
 
     builder.Services.AddScoped<IHaciendaService, HaciendaService>();
     builder.Services.AddScoped<IDTEDocumentService, DTEDocumentService>();
-
+    builder.Services.AddSingleton<PayPalService>();
     // ============================================
     // CONFIGURACIÓN DE SERVICIOS BÁSICOS
     // ============================================

@@ -18,6 +18,11 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Range(1, int.MaxValue, ErrorMessage = "El ID del usuario debe ser mayor a 0")]
         public int UserId { get; set; }
 
+        [JsonPropertyName("branchOfficeId")]
+        [Required(ErrorMessage = "El ID de la sucursal es requerido")]
+        [Range(1, int.MaxValue, ErrorMessage = "El ID de la sucursal debe ser mayor a 0")]
+        public int BranchOfficeId { get; set; }
+
         [JsonPropertyName("items")]
         [Required(ErrorMessage = "Los items son requeridos")]
         [MinLength(1, ErrorMessage = "Debe incluir al menos 1 item")]
@@ -27,7 +32,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Required(ErrorMessage = "El receptor es requerido")]
         public CreditNoteReceiverRequestDTO? Receiver { get; set; }
 
-        [JsonPropertyName("modelType")]
+        [JsonPropertyName("model_type")]
         public int? ModelType { get; set; } = 1;
 
         [JsonPropertyName("summary")]
@@ -41,10 +46,10 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [JsonPropertyName("sendToHacienda")]
         public bool? SendToHacienda { get; set; } = true;
 
-        [JsonPropertyName("relatedDocs")]
+        [JsonPropertyName("related_docs")]  
         public List<CreditNoteRelatedDocRequestDTO>? RelatedDocs { get; set; }
 
-        [JsonPropertyName("thirdPartySale")]
+        [JsonPropertyName("third_party_sale")]
         public CreditNoteThirdPartySaleRequestDTO? ThirdPartySale { get; set; }
     }
 

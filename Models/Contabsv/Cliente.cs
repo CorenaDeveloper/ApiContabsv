@@ -70,4 +70,10 @@ public partial class Cliente
     public string EstadoCliente { get; set; }
 
     public int? UserDte { get; set; }
+
+    public string Ambiente { get; set; }
+
+    public virtual ICollection<HistorialPago> HistorialPagos { get; set; } = new List<HistorialPago>();
+
+    public virtual ICollection<Suscripcione> Suscripciones { get; set; } = new List<Suscripcione>();
 }

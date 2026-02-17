@@ -19,6 +19,11 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Range(1, int.MaxValue, ErrorMessage = "El ID del usuario debe ser mayor a 0")]
         public int UserId { get; set; }
 
+        [JsonPropertyName("branchOfficeId")]
+        [Required(ErrorMessage = "El ID de la sucursal es requerido")]
+        [Range(1, int.MaxValue, ErrorMessage = "El ID de la sucursal debe ser mayor a 0")]
+        public int BranchOfficeId { get; set; }
+
         [JsonPropertyName("items")]
         [Required(ErrorMessage = "Los items son requeridos")]
         [MinLength(1, ErrorMessage = "Debe incluir al menos 1 item")]
@@ -148,13 +153,20 @@ namespace ApiContabsv.DTO.DB_DteDTO
             {
                 switch (Receiver.DocumentType)
                 {
-                    case "13": // DUI
-                        if (!System.Text.RegularExpressions.Regex.IsMatch(Receiver.DocumentNumber, @"^[0-9]{8}-[0-9]{1}$"))
+
+                    case "13":
+                        // Ajustamos para que el guin vaya en la posición correcta del DUI
+                        var cleanDui = Receiver.DocumentNumber.Replace("-", "").Trim();
+                        if (!System.Text.RegularExpressions.Regex.IsMatch(cleanDui, @"^[0-9]{9}$"))
                         {
-                            results.Add(new ValidationResult("El DUI debe tener formato XXXXXXXX-X (8 dígitos, guión, 1 dígito)", new[] { "Receiver.DocumentNumber" }));
+                            results.Add(new ValidationResult("El DUI debe tener 9 dígitos en formato 05128359-6", new[] { "Receiver.DocumentNumber" }));
+                        }
+                        else
+                        {
+                            var formattedDui = cleanDui.Substring(0, 8) + "-" + cleanDui.Substring(8, 1);
+                            Receiver.DocumentNumber = formattedDui;
                         }
                         break;
-
                     case "36": // NIT
                         // Limpiar guiones para validación
                         var cleanNit = Receiver.DocumentNumber.Replace("-", "").Trim();
@@ -471,78 +483,3 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public decimal Amount { get; set; }
     }
 }
-
-//{
-//    "clientId": 5,
-//  "userId": 5,
-//  "items": [
-//    {
-//        "type": 1,
-//      "description": "CODO PVC 3/4",
-//      "quantity": 12,
-//      "unit_measure": 59,
-//      "unit_price": 0.65,
-//      "discount": 0,
-//      "code": "COD1",
-//      "non_subject_sale": 0,
-//      "exempt_sale": 0,
-//      "taxed_sale": 7.8,
-//      "suggested_price": 0,
-//      "non_taxed": 0,
-//      "iva_item": 0.9
-//    },
-//    {
-//        "type": 1,
-//      "description": "CODO PVC 1",
-//      "quantity": 123,
-//      "unit_measure": 59,
-//      "unit_price": 0.75,
-//      "discount": 0,
-//      "code": "COD2",
-//      "non_subject_sale": 0,
-//      "exempt_sale": 0,
-//      "taxed_sale": 92.25,
-//      "suggested_price": 0,
-//      "non_taxed": 0,
-//      "iva_item": 10.61
-//    }
-//  ],
-//  "receiver": {
-//        "document_type": "13",
-//    "document_number": "05128459-6",
-//    "name": "MAURICIO CORENA",
-//    "address": {
-//            "department": "08",
-//    "municipality": "23",
-//    "complement": "SOYAPANGO, SAN SALVADOR"
-//    },
-//    "phone": "6102 2136",
-//    "email": "corenaDeveloper@gmail.com"
-//  },
-//  "summary": {
-//        "total_non_subject": 0,
-//    "total_exempt": 0,
-//    "total_taxed": 100.05,
-//    "sub_total": 100.05,
-//    "non_subject_discount": 0,
-//    "exempt_discount": 0,
-//    "taxed_discount": 0,
-//    "discount_percentage": 0,
-//    "total_discount": 0,
-//    "sub_total_sales": 100.05,
-//    "total_operation": 100.05,
-//    "total_non_taxed": 0,
-//    "total_to_pay": 100.05,
-//    "operation_condition": 1,
-//    "iva_retention": 0,
-//    "total_iva": 11.51,
-//    "payment_types": [
-//      {
-//            "code": "01",
-//        "amount": 100.05
-//      }
-//    ]
-//  },
-//  "environment": "00",
-//  "sendToHacienda": true
-//}

@@ -37,6 +37,70 @@ namespace ApiContabsv.Controllers
 
         /// <summary>
         /// CREAR COMPROBANTE DE CRÉDITO FISCAL (CCF)
+        /// Ejemplo de json para el body:
+        ////{
+        ////    "clientId": 6,
+        ////  "userId": 5,
+        ////  "items": [
+        ////    {
+        ////        "type": 1,
+        ////      "description": "Venta gravada",
+        ////      "quantity": 1,
+        ////      "unit_measure": 59,
+        ////      "unit_price": 2000.00,
+        ////      "taxed_sale": 2000.00,
+        ////      "exempt_sale": 0,
+        ////      "non_subject_sale": 0,
+        ////      "taxes": [
+        ////        "20"
+        ////      ]
+        ////    }
+        ////  ],
+        ////  "receiver": {
+        ////        "nrc": "3625871",
+        ////    "nit": "06140912941505",
+        ////    "name": "CLIENTE DE PRUEBA",
+        ////    "commercial_name": "EJEMPLO S.A de S.V",
+        ////    "activity_code": "62010",
+        ////    "activity_description": "Programacion informatica",
+        ////    "address": {
+        ////            "department": "06",
+        ////      "municipality": "22",
+        ////      "complement": "Dirección de Prueba 1, N° 1234"
+        ////    },
+        ////    "phone": "21212828",
+        ////    "email": "cliente@gmail.com"
+        ////  },
+        ////  "summary": {
+        ////    "operation_condition": 1,
+        ////    "total_taxed": 2000.00,
+        ////    "total_exempt": 0,
+        ////    "total_non_taxed": 0,
+        ////    "total_non_subject": 0,
+        ////    "sub_total_sales": 2000.00,
+        ////    "sub_total": 2000.00,
+        ////    "iva_perception": 0,
+        ////    "iva_retention": 0,
+        ////    "income_retention": 0,
+        ////    "total_operation": 2260.00,
+        ////    "total_to_pay": 2260.00,
+        ////    "taxes": [
+        ////      {
+        ////        "code": "20",
+        ////        "description": "IVA 13%",
+        ////        "value": 260.00
+        ////      }
+        ////    ],
+        ////    "payment_types": [
+        ////      {
+        ////        "code": "01",
+        ////        "amount": 2260.00
+        ////      }
+        ////    ]
+        ////  },
+        ////  "environment": "00",
+        ////  "sendToHacienda": true
+        ////}
         /// </summary>
         [HttpPost]
         public async Task<ActionResult> CreateCCF([FromBody] CreateCCFRequestDTO request)
@@ -45,35 +109,50 @@ namespace ApiContabsv.Controllers
 
             try
             {
-                // 1. OBTENER DATOS DEL USER (EMISOR)
-                var user = await _context.Users.FindAsync(request.ClientId);
+                // 1. Obtenemos los datos del usuario emisor
+                var user = await _context.Users.FindAsync(request.UserId);
                 if (user == null)
-                    return BadRequest($"Usuario con ID {request.ClientId} no encontrado");
+                    return BadRequest($"Usuario con ID {request.UserId} no encontrado");
 
-                
-                // 2. OBTENER FIRMADOR ÓPTIMO
+                // 2. validar que la sucursal pertenezca al usuario
+                var branchOffice = await _context.BranchOffices
+                                   .Include(b => b.Addresses)  // Si tienes relación con direcciones
+                                   .FirstOrDefaultAsync(b => b.Id == request.BranchOfficeId
+                                    && b.UserId == user.Id
+                                    && b.IsActive);
+
+                if (branchOffice == null)
+                    return BadRequest($"Sucursal con ID {request.BranchOfficeId} no encontrada o inactiva");
+
+                // 3. obtener el firmador optimo para el usuario
                 var optimalSigner = await GetOptimalSignerForUser(request.UserId);
                 if (optimalSigner == null)
                     return BadRequest("No hay firmadores disponibles para el usuario");
 
-                // 3. VERIFICAR CERTIFICADO
+                // 4. verificamos que el certificado exista
                 var certificatePath = Path.Combine(optimalSigner.CertificatePath, $"{user.Nit}.crt");
                 if (!System.IO.File.Exists(certificatePath))
                     return BadRequest($"Certificado no encontrado para NIT: {user.Nit}");
 
-                // 4. GENERAR NÚMERO DE CONTROL ÚNICO (tipo 03 para CCF)
+                // 5. generamos un numero de control interno valido
+                var establishmentCode = branchOffice.EstablishmentCode ?? "";
+                var posCode = branchOffice.PosCode ?? "";
+
+                // 6. Obtener el siguiente número de secuencia
+                // para el tipo de documento 01 (Factura)
                 var sequenceNumber = await _documentService.GetNextSequenceNumber(
-                                     user.Id, "03", "M001", "P000");  // tipo "03" 
-                var controlNumber = $"DTE-03-M001P000-{DateTime.Now.Year}{sequenceNumber:00000000000}";
+                    user.Id, "03", establishmentCode, posCode, request.Environment ?? "00");
 
+                var controlNumber = $"DTE-03-{establishmentCode}{posCode}-{DateTime.Now.Year}{sequenceNumber:00000000000}";
 
-                // 5. GENERAR DTE ID ÚNICO
+                // 7. Generamos un DTE unico
                 dteId = Guid.NewGuid().ToString().ToUpper();
 
-                // 6. CONSTRUIR DOCUMENTO CCF
-                var dteDocument = BuildCCFDocument(user, request, controlNumber, dteId);
+                // 8.Contruir documento dete con datos de la sucursal, usuario y request
+                // Crear el documento DTE como factura consumidor final
+                var dteDocument = BuildCCFDocument(user, branchOffice, request, controlNumber, dteId, "03");
 
-                // 7. FIRMAR DOCUMENTO
+                // 9. Firmador de documento
                 var signResult = await SignDocument(user, dteDocument, optimalSigner);
                 if (!signResult.Success)
                 {
@@ -85,7 +164,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 8. EXTRAER JWT FIRMADO
+                // 10. extraer JWT firmador
                 var signedJWT = ExtractJWTFromSignerResponse(signResult.Response);
                 if (string.IsNullOrEmpty(signedJWT))
                 {
@@ -96,7 +175,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 9. GUARDAR EN BASE DE DATOS
+                // 11. Guardamos en la base de datatos datos antes de enviar 
                 var saveRequest = new SaveDocumentRequest
                 {
                     DteId = dteId,
@@ -107,13 +186,14 @@ namespace ApiContabsv.Controllers
                     TotalAmount = request.Summary?.TotalToPay ?? 0,
                     Status = "FIRMADO",
                     JsonContent = JsonSerializer.Serialize(dteDocument),
-                    EstablishmentCode = "M001",
-                    PosCode = "P000"
+                    EstablishmentCode = establishmentCode,
+                    PosCode = posCode,
+                    Ambiente = request.Environment ?? ""
                 };
 
                 var documentId = await _documentService.SaveDocument(saveRequest);
 
-                // 10. ENVIAR A HACIENDA
+                // 12. Enviamos hacienda (Transmision) y actualizamos estado segun la repuesta
                 HaciendaTransmissionResult? transmissionResult = null;
                 string finalDocumentStatus = "FIRMADO";
 
@@ -127,7 +207,6 @@ namespace ApiContabsv.Controllers
                         3
                         );
 
-                    // ✅ LÓGICA CORREGIDA BASADA EN GO:
                     if (transmissionResult != null)
                     {
                         string errorMessage = null;
@@ -165,13 +244,10 @@ namespace ApiContabsv.Controllers
                             transmissionResult.RawResponse,
                             responseCode);
 
-                        _logger.LogInformation($"Documento {dteId} actualizado a estado: {finalDocumentStatus}");
                     }
                     else
                     {
-                        _logger.LogError($"transmissionResult es null para documento {dteId}");
                         finalDocumentStatus = "ERROR_TRANSMISION";
-
                         await _documentService.UpdateDocumentStatus(
                             dteId,
                             finalDocumentStatus,
@@ -183,6 +259,7 @@ namespace ApiContabsv.Controllers
                     }
                 }
 
+                // 13. Respuesta exitosa
                 var response = new
                 {
                     success = true,
@@ -245,11 +322,14 @@ namespace ApiContabsv.Controllers
         /// OBTENER DOCUMENTO POR DTE ID
         /// </summary>
         [HttpGet("{dteId}")]
-        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(string dteId)
+        public async Task<ActionResult<DTEDocumentResponse>> GetDocument(
+            string dteId, 
+            int userdte,
+            string ambiente)
         {
             try
             {
-                var document = await _documentService.GetDocument(dteId);
+                var document = await _documentService.GetDocument(dteId, userdte, ambiente);
                 if (document == null)
                     return NotFound("Documento no encontrado");
 
@@ -257,7 +337,6 @@ namespace ApiContabsv.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo documento {DteId}", dteId);
                 return StatusCode(500, "Error interno obteniendo documento");
             }
         }
@@ -266,7 +345,11 @@ namespace ApiContabsv.Controllers
         /// LISTAR DOCUMENTOS CCF DE UN USUARIO
         /// </summary>
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(int userId,string? startDate = null, [FromQuery] string? endDate = null)
+        public async Task<ActionResult<List<DTEDocumentResponse>>> GetUserDocuments(
+             int userId,
+            [FromQuery] string? startDate = null,
+            [FromQuery] string? endDate = null,
+            string ambiente = "")
         {
             try
             {
@@ -283,12 +366,11 @@ namespace ApiContabsv.Controllers
                     parsedEndDate = end;
                 }
 
-                var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate, "03");
+                var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate, "03", ambiente);
                 return Ok(documents);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error obteniendo documentos del usuario {UserId}", userId);
                 return StatusCode(500, "Error interno obteniendo documentos");
             }
         }
@@ -390,7 +472,7 @@ namespace ApiContabsv.Controllers
             return null;
         }
 
-        private object BuildCCFDocument(User user, CreateCCFRequestDTO request, string controlNumber, string dteId)
+        private object BuildCCFDocument(User user, BranchOffice branchOffice, CreateCCFRequestDTO request, string controlNumber, string dteId, string tipoDocumento)
         {
             return new
             {
@@ -399,7 +481,7 @@ namespace ApiContabsv.Controllers
                 {
                     version = 3, 
                     ambiente = request.Environment ?? "00",
-                    tipoDte = "03", // CCF
+                    tipoDte = tipoDocumento, 
                     numeroControl = controlNumber,
                     codigoGeneracion = dteId,
                     tipoModelo = request.ModelType ?? 1,
@@ -411,39 +493,42 @@ namespace ApiContabsv.Controllers
                     tipoMoneda = "USD"
                 },
 
-                //  EMISOR
-                emisor = MapEmisorFromUser(user),
-
-                //  RECEPTOR (con NRC obligatorio)
+                emisor = MapEmisorFromBranchOffice(user, branchOffice),
                 receptor = MapCCFReceptor(request.Receiver),
-
-                //  CUERPO DOCUMENTO
                 cuerpoDocumento = MapItems(request.Items),
-
-                //  RESUMEN
                 resumen = MapCCFResumen(request.Summary),
 
-                // DOCUMENTOS RELACIONADOS (opcional)
                 documentoRelacionado = request.RelatedDocs != null && request.RelatedDocs.Any()
                     ? MapRelatedDocs(request.RelatedDocs)
                     : null,
-
-                //  VENTA TERCERO (opcional)
                 ventaTercero = request.ThirdPartySale != null ? new
                 {
                     nit = request.ThirdPartySale.Nit,
                     nombre = request.ThirdPartySale.Name
                 } : null,
-
-                //  CAMPOS OPCIONALES
                 otrosDocumentos = (object?)null,
                 extension = (object?)null,
                 apendice = (object?)null
             };
         }
 
-        private object MapEmisorFromUser(User user)
+        private object MapEmisorFromBranchOffice(User user, BranchOffice branchOffice)
         {
+            var address = branchOffice.Addresses?.FirstOrDefault();
+            if (address == null)
+            {
+                throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene dirección configurada");
+            }
+            if (string.IsNullOrEmpty(branchOffice.EstablishmentCode))
+            {
+                throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene código de establecimiento configurado");
+            }
+
+            if (string.IsNullOrEmpty(branchOffice.PosCode))
+            {
+                throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene código de punto de venta configurado");
+            }
+
             return new
             {
                 nit = user.Nit,
@@ -452,19 +537,20 @@ namespace ApiContabsv.Controllers
                 codActividad = user.EconomicActivity,
                 descActividad = user.EconomicActivityDesc,
                 nombreComercial = user.CommercialName,
-                tipoEstablecimiento = "02",
-                codEstable = "M001",
-                codPuntoVenta = "P000",
+                tipoEstablecimiento = branchOffice.EstablishmentType,
+                codEstable = branchOffice.EstablishmentCode,
+                codPuntoVenta = branchOffice.PosCode,
                 direccion = new
                 {
-                    departamento = "03",
-                    municipio = "18",
-                    complemento = "Barrio el Ángel, calle el Ángel, casa 26 Sonsonate"
+                    departamento = address.Department,
+                    municipio = address.Municipality,
+                    complemento = address.Address1 + (string.IsNullOrEmpty(address.Complement) ? "" : ", " + address.Complement)
                 },
-                telefono = "61032136",
-                correo = "corenadeveloper@gmail.com",
-                codEstableMH = "M001",
-                codPuntoVentaMH = "P000"
+
+                telefono = branchOffice.Phone ?? user.Phone,
+                correo = branchOffice.Email ?? user.Email,
+                codEstableMH = branchOffice.EstablishmentCodeMh ?? branchOffice.EstablishmentCode,
+                codPuntoVentaMH = branchOffice.PosCodeMh ?? branchOffice.PosCode
             };
         }
 
@@ -529,7 +615,6 @@ namespace ApiContabsv.Controllers
                 descuGravada = summary.TaxedDiscount,
                 porcentajeDescuento = summary.DiscountPercentage,
                 totalDescu = summary.TotalDiscount,
-                //  Mapear el array de taxes del request
                 tributos = summary.Taxes?.Select(t => new
                 {
                     codigo = t.Code,
@@ -571,7 +656,6 @@ namespace ApiContabsv.Controllers
 
         private string NumberToWords(decimal amount)
         {
-            // Implementación simple - puedes mejorarla
             var intPart = (int)Math.Floor(amount);
             var decPart = (int)((amount - intPart) * 100);
             return $"{intPart:N0} CON {decPart:00}/100 DOLARES".Replace(",", " ");

@@ -53,6 +53,8 @@ public partial class User
 
     public int? TokenLifetimeDays { get; set; }
 
+    public string Ambiente { get; set; }
+
     public virtual ICollection<BranchOffice> BranchOffices { get; set; } = new List<BranchOffice>();
 
     public virtual ICollection<ContingencyDocument> ContingencyDocuments { get; set; } = new List<ContingencyDocument>();
