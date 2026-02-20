@@ -1,0 +1,14 @@
+2026-02-19 23:03:41.105 -06:00 [INF] 🚀 Iniciando aplicación ApiContabsv
+2026-02-19 23:04:52.701 -06:00 [INF] 🚀 Iniciando aplicación ApiContabsv
+2026-02-19 23:04:53.649 -06:00 [INF] ✅ Aplicación configurada correctamente
+2026-02-19 23:04:53.985 -06:00 [INF] Now listening on: https://localhost:7189
+2026-02-19 23:04:53.991 -06:00 [INF] Now listening on: http://localhost:5241
+2026-02-19 23:04:54.113 -06:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-19 23:04:54.116 -06:00 [INF] Hosting environment: Development
+2026-02-19 23:04:54.118 -06:00 [INF] Content root path: C:\Users\programador04\Documents\GitHub\ApiContabsv
+2026-02-19 23:05:24.246 -06:00 [INF] Request starting HTTP/2 GET https://localhost:7189/swagger - null null
+2026-02-19 23:05:24.427 -06:00 [INF] HTTP GET /swagger responded 401 in 49.5443 ms
+2026-02-19 23:05:24.436 -06:00 [INF] Request finished HTTP/2 GET https://localhost:7189/swagger - 401 null null 198.2529ms
+2026-02-19 23:05:24.529 -06:00 [INF] Request starting HTTP/2 GET https://localhost:7189/favicon.ico - null null
+2026-02-19 23:05:24.548 -06:00 [INF] HTTP GET /favicon.ico responded 401 in 13.4136 ms
+2026-02-19 23:05:24.550 -06:00 [INF] Request finished HTTP/2 GET https://localhost:7189/favicon.ico - 401 null null 20.7851ms

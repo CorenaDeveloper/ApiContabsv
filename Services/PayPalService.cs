@@ -77,32 +77,25 @@ namespace ApiContabsv.Services
                 intent = "CAPTURE",
                 purchase_units = new[]
                 {
-                    new
-                    {
-                        reference_id = referencia,
-                        description = descripcion,
-                        amount = new
-                        {
-                            currency_code = "USD",
-                            value = monto.ToString("F2")
-                        }
-                    }
-                },
-                payment_source = new
+            new
+            {
+                reference_id = referencia,
+                description = descripcion,
+                amount = new
                 {
-                    paypal = new
-                    {
-                        experience_context = new
-                        {
-                            payment_method_preference = "UNRESTRICTED",
-                            brand_name = "ContabSV",
-                            locale = "es-SV",
-                            landing_page = "NO_PREFERENCE",
-                            user_action = "PAY_NOW",
-                            return_url = returnUrl,
-                            cancel_url = cancelUrl
-                        }
-                    }
+                    currency_code = "USD",
+                    value = monto.ToString("F2")
+                }
+            }
+        }, // ← Esta coma está bien, separa purchase_units de application_context
+                application_context = new
+                {
+                    brand_name = "ContabSV",
+                    locale = "es-SV",
+                    landing_page = "GUEST_CHECKOUT",
+                    user_action = "PAY_NOW",
+                    return_url = returnUrl,
+                    cancel_url = cancelUrl
                 }
             };
 
@@ -131,7 +124,7 @@ namespace ApiContabsv.Services
             var links = orderData.GetProperty("links");
             foreach (var link in links.EnumerateArray())
             {
-                if (link.GetProperty("rel").GetString() == "payer-action")
+                if (link.GetProperty("rel").GetString() == "approve")
                 {
                     approvalUrl = link.GetProperty("href").GetString();
                     break;
@@ -205,20 +198,13 @@ namespace ApiContabsv.Services
         public async Task<string> GetOrderStatus(string orderId)
         {
             var token = await GetAccessToken();
-
             var request = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/v2/checkout/orders/{orderId}");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             var response = await _httpClient.SendAsync(request);
-            var responseJson = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var orderData = JsonSerializer.Deserialize<JsonElement>(responseJson);
-            return orderData.GetProperty("status").GetString();
+            var json = await response.Content.ReadAsStringAsync();
+            var data = JsonSerializer.Deserialize<JsonElement>(json);
+            return data.GetProperty("status").GetString() ?? "UNKNOWN";
         }
     }
 
