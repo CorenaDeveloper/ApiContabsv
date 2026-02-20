@@ -57,6 +57,7 @@ try
     builder.Services.AddScoped<IHaciendaService, HaciendaService>();
     builder.Services.AddScoped<IDTEDocumentService, DTEDocumentService>();
     builder.Services.AddSingleton<PayPalService>();
+    builder.Services.AddSingleton<WompiService>();
     // ============================================
     // CONFIGURACIÓN DE SERVICIOS BÁSICOS
     // ============================================

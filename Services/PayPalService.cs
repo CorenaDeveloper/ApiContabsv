@@ -87,12 +87,12 @@ namespace ApiContabsv.Services
                     value = monto.ToString("F2")
                 }
             }
-        }, // ← Esta coma está bien, separa purchase_units de application_context
+        },
                 application_context = new
                 {
                     brand_name = "ContabSV",
                     locale = "es-SV",
-                    landing_page = "GUEST_CHECKOUT",
+                    landing_page = "BILLING",
                     user_action = "PAY_NOW",
                     return_url = returnUrl,
                     cancel_url = cancelUrl
@@ -100,6 +100,11 @@ namespace ApiContabsv.Services
             };
 
             var json = JsonSerializer.Serialize(orderBody);
+
+            // LOG PARA DEBUG - muestra qué JSON estás enviando
+            Console.WriteLine("JSON enviado a PayPal:");
+            Console.WriteLine(json);
+
             var request = new HttpRequestMessage(HttpMethod.Post, $"{_baseUrl}/v2/checkout/orders");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
             request.Content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -109,6 +114,10 @@ namespace ApiContabsv.Services
 
             if (!response.IsSuccessStatusCode)
             {
+                // LOG PARA DEBUG - muestra qué error da PayPal
+                Console.WriteLine("Error de PayPal:");
+                Console.WriteLine(responseJson);
+
                 return new PayPalOrderResult
                 {
                     Success = false,
@@ -119,7 +128,6 @@ namespace ApiContabsv.Services
             var orderData = JsonSerializer.Deserialize<JsonElement>(responseJson);
             var orderId = orderData.GetProperty("id").GetString();
 
-            // Buscar la URL de aprobación
             string approvalUrl = null;
             var links = orderData.GetProperty("links");
             foreach (var link in links.EnumerateArray())
