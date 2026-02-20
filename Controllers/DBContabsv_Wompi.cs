@@ -33,7 +33,6 @@ namespace ApiContabsv.Controllers
                 if (suscripcion == null)
                     return NotFound("Suscripción no encontrada");
 
-                // Calcular monto total mensual
                 var monto = suscripcion.SuscripcionDetalles
                     .Where(d => d.Activo == true && d.TipoCobro == "mensual")
                     .Sum(d => d.PrecioUnitario);
@@ -85,7 +84,24 @@ namespace ApiContabsv.Controllers
                     .Where(d => d.Activo == true && d.TipoCobro == "mensual")
                     .Sum(d => d.PrecioUnitario);
 
-                // Registrar pago como "pendiente" hasta que llegue el webhook
+                // Verificar si ya existe un pago para este enlace
+                var pagoExistente = await _context.HistorialPagos
+                    .FirstOrDefaultAsync(p => p.PaypalPaymentId == request.TransactionId);
+
+                if (pagoExistente != null)
+                {
+                    return Ok(new
+                    {
+                        success = true,
+                        message = pagoExistente.EstadoPago == "completado"
+                            ? "Pago confirmado exitosamente"
+                            : "Pago en proceso de confirmación",
+                        estado = pagoExistente.EstadoPago,
+                        transactionId = request.TransactionId,
+                        idPago = pagoExistente.IdPago
+                    });
+                }
+
                 var pago = new HistorialPago
                 {
                     IdSuscripcion = request.IdSuscripcion,
@@ -93,7 +109,7 @@ namespace ApiContabsv.Controllers
                     FechaPago = DateTime.Now,
                     Monto = monto,
                     MetodoPago = "wompi",
-                    EstadoPago = "pendiente", // ✅ Cambiar a "pendiente"
+                    EstadoPago = "pendiente",
                     PaypalPaymentId = request.TransactionId,
                     DetallePago = System.Text.Json.JsonSerializer.Serialize(new
                     {
@@ -111,7 +127,8 @@ namespace ApiContabsv.Controllers
                 return Ok(new
                 {
                     success = true,
-                    message = "Pago en proceso de confirmación",
+                    message = "Pago registrado, esperando confirmación",
+                    estado = "pendiente",
                     transactionId = request.TransactionId,
                     idPago = pago.IdPago
                 });
@@ -123,73 +140,50 @@ namespace ApiContabsv.Controllers
         }
 
         [HttpPost("Webhook")]
-        [AllowAnonymous] // ⚠️ Wompi no envía autenticación
+        [AllowAnonymous]
         public async Task<ActionResult> RecibirWebhookWompi([FromBody] JsonElement webhookData)
         {
             try
             {
-                Console.WriteLine("═══════════════════════════════════════");
-                Console.WriteLine("🔔 WEBHOOK RECIBIDO DE WOMPI");
-                Console.WriteLine("═══════════════════════════════════════");
-                Console.WriteLine(webhookData.ToString());
-                Console.WriteLine("═══════════════════════════════════════");
-
-                // Extraer datos del webhook
                 var idEnlace = webhookData.GetProperty("idEnlace").GetInt32();
-                var identificadorEnlaceComercio = webhookData.GetProperty("identificadorEnlaceComercio").GetString();
-                var esProductiva = webhookData.GetProperty("esProductiva").GetBoolean();
                 var esAprobada = webhookData.GetProperty("esAprobada").GetBoolean();
-                var monto = webhookData.GetProperty("monto").GetDecimal();
-                var idTransaccion = webhookData.GetProperty("idTransaccion").GetInt32();
 
-                Console.WriteLine($"✅ Pago aprobado: {esAprobada}, Monto: ${monto}");
-
-                // Solo procesar si es pago aprobado
-                if (esAprobada)
+                if (!esAprobada)
                 {
-                    // Extraer idSuscripcion del identificadorEnlaceComercio
-                    // Formato: "CONTABSV-{timestamp}-{idSuscripcion}"
-                    // O mejor: guardar en un diccionario temporal al crear el enlace
-
-                    // Por ahora, buscar pago pendiente con este idEnlace
-                    var pagoPendiente = await _context.HistorialPagos
-                        .FirstOrDefaultAsync(p => p.PaypalPaymentId == idEnlace.ToString()
-                                               && p.EstadoPago == "pendiente");
-
-                    if (pagoPendiente != null)
-                    {
-                        // Actualizar estado del pago
-                        pagoPendiente.EstadoPago = "completado";
-                        pagoPendiente.FechaPago = DateTime.Now;
-
-                        // Actualizar suscripción
-                        var suscripcion = await _context.Suscripciones
-                            .Include(s => s.SuscripcionDetalles)
-                            .FirstOrDefaultAsync(s => s.IdSuscripcion == pagoPendiente.IdSuscripcion);
-
-                        if (suscripcion != null)
-                        {
-                            foreach (var detalle in suscripcion.SuscripcionDetalles.Where(d => d.Activo == true))
-                            {
-                                if (detalle.TipoCobro == "mensual")
-                                    detalle.FechaVencimiento = detalle.FechaVencimiento.AddMonths(1);
-                                else if (detalle.TipoCobro == "anual")
-                                    detalle.FechaVencimiento = detalle.FechaVencimiento.AddYears(1);
-                            }
-                        }
-
-                        await _context.SaveChangesAsync();
-                        Console.WriteLine("✅ Pago confirmado y suscripción actualizada");
-                    }
+                    return Ok(new { mensaje = "Pago no aprobado" });
                 }
 
-                // ⚠️ SIEMPRE devolver 200 OK para que Wompi no reintente
+                var pagoPendiente = await _context.HistorialPagos
+                    .FirstOrDefaultAsync(p => p.PaypalPaymentId == idEnlace.ToString()
+                                           && p.EstadoPago == "pendiente");
+
+                if (pagoPendiente != null)
+                {
+                    pagoPendiente.EstadoPago = "completado";
+                    pagoPendiente.FechaPago = DateTime.Now;
+
+                    var suscripcion = await _context.Suscripciones
+                        .Include(s => s.SuscripcionDetalles)
+                        .FirstOrDefaultAsync(s => s.IdSuscripcion == pagoPendiente.IdSuscripcion);
+
+                    if (suscripcion != null)
+                    {
+                        foreach (var detalle in suscripcion.SuscripcionDetalles.Where(d => d.Activo == true))
+                        {
+                            if (detalle.TipoCobro == "mensual")
+                                detalle.FechaVencimiento = detalle.FechaVencimiento.AddMonths(1);
+                            else if (detalle.TipoCobro == "anual")
+                                detalle.FechaVencimiento = detalle.FechaVencimiento.AddYears(1);
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                }
+
                 return Ok(new { mensaje = "Webhook procesado" });
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error procesando webhook: {ex.Message}");
-                // ⚠️ SIEMPRE devolver 200 OK incluso con error
                 return Ok(new { mensaje = "Error procesado" });
             }
         }
