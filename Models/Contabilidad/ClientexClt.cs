@@ -47,6 +47,8 @@ public partial class ClientexClt
 
     public int? IdMunicipio { get; set; }
 
+    public bool? CuentaBolson { get; set; }
+
     public virtual ICollection<Venta> Venta { get; set; } = new List<Venta>();
 
     public virtual ICollection<VentaConsumidor> VentaConsumidors { get; set; } = new List<VentaConsumidor>();

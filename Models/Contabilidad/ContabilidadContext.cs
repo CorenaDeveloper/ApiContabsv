@@ -151,6 +151,9 @@ public partial class ContabilidadContext : DbContext
             entity.Property(e => e.Celular)
                 .HasMaxLength(13)
                 .HasColumnName("celular");
+            entity.Property(e => e.CuentaBolson)
+                .HasDefaultValue(false)
+                .HasColumnName("cuentaBolson");
             entity.Property(e => e.Direccion)
                 .HasMaxLength(500)
                 .IsUnicode(false)
@@ -528,6 +531,10 @@ public partial class ContabilidadContext : DbContext
                 .HasColumnName("costoEnvio");
             entity.Property(e => e.DebitoFiscal).HasColumnType("decimal(18, 2)");
             entity.Property(e => e.DebitoFiscalVentasTerceros).HasColumnType("decimal(18, 2)");
+            entity.Property(e => e.DireccionBolson)
+                .HasMaxLength(200)
+                .IsUnicode(false)
+                .HasColumnName("direccionBolson");
             entity.Property(e => e.DireccionEnvio)
                 .HasMaxLength(500)
                 .HasColumnName("direccionEnvio");
@@ -563,6 +570,10 @@ public partial class ContabilidadContext : DbContext
             entity.Property(e => e.IdTipoDocumento).HasColumnName("idTipoDocumento");
             entity.Property(e => e.IdTipoOperacionCg).HasColumnName("idTipoOperacionCG");
             entity.Property(e => e.JsonDte).HasColumnName("jsonDTE");
+            entity.Property(e => e.NombreBolson)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("nombreBolson");
             entity.Property(e => e.NumeroControlInterno)
                 .HasMaxLength(20)
                 .IsUnicode(false);
@@ -589,6 +600,10 @@ public partial class ContabilidadContext : DbContext
             entity.Property(e => e.SerieDocumento)
                 .HasMaxLength(20)
                 .IsUnicode(false);
+            entity.Property(e => e.TelefonoBolson)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasColumnName("telefonoBolson");
             entity.Property(e => e.TipoEnvio)
                 .HasMaxLength(50)
                 .IsUnicode(false)

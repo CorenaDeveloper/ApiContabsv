@@ -107,13 +107,14 @@ namespace ApiContabsv.Controllers
                 clienteExistente.Nombres = !string.IsNullOrEmpty(clienteActualizado.Nombres) ? clienteActualizado.Nombres : clienteExistente.Nombres;
                 clienteExistente.Apellidos = !string.IsNullOrEmpty(clienteActualizado.Apellidos) ? clienteActualizado.Apellidos : clienteExistente.Apellidos;
                 clienteExistente.PersonaJuridica = clienteActualizado.PersonaJuridica;
+                clienteExistente.EstadoCliente = clienteActualizado.EstadoCliente;
                 clienteExistente.NombreRazonSocial = !string.IsNullOrEmpty(clienteActualizado.NombreRazonSocial) ? clienteActualizado.NombreRazonSocial : clienteExistente.NombreRazonSocial;
                 clienteExistente.NombreComercial = !string.IsNullOrEmpty(clienteActualizado.NombreComercial) ? clienteActualizado.NombreComercial : clienteExistente.NombreComercial;
                 clienteExistente.DuiCliente = !string.IsNullOrEmpty(clienteActualizado.DuiCliente) ? clienteActualizado.DuiCliente : clienteExistente.DuiCliente;
                 clienteExistente.RepresentanteLegal = !string.IsNullOrEmpty(clienteActualizado.RepresentanteLegal) ? clienteActualizado.RepresentanteLegal : clienteExistente.RepresentanteLegal;
                 clienteExistente.DuiRepresentanteLegal = !string.IsNullOrEmpty(clienteActualizado.DuiRepresentanteLegal) ? clienteActualizado.DuiRepresentanteLegal : clienteExistente.DuiRepresentanteLegal;
-                clienteExistente.TelefonoCliente = !string.IsNullOrEmpty(clienteActualizado.TelefonoCliente) ? clienteActualizado.TelefonoCliente : clienteExistente.TelefonoCliente;
-                clienteExistente.Celular = !string.IsNullOrEmpty(clienteActualizado.Celular) ? clienteActualizado.Celular : clienteExistente.Celular;
+                clienteExistente.TelefonoCliente = !string.IsNullOrEmpty(clienteActualizado.TelefonoCliente) ? clienteActualizado.TelefonoCliente : "";
+                clienteExistente.Celular = !string.IsNullOrEmpty(clienteActualizado.Celular) ? clienteActualizado.Celular : "";
                 clienteExistente.Nrc = !string.IsNullOrEmpty(clienteActualizado.Nrc) ? clienteActualizado.Nrc : clienteExistente.Nrc;
                 clienteExistente.NitCliente = !string.IsNullOrEmpty(clienteActualizado.NitCliente) ? clienteActualizado.NitCliente : clienteExistente.NitCliente;
                 clienteExistente.Direccion = !string.IsNullOrEmpty(clienteActualizado.Direccion) ? clienteActualizado.Direccion : clienteExistente.Direccion;
@@ -129,13 +130,16 @@ namespace ApiContabsv.Controllers
                 clienteExistente.Ambiente = !string.IsNullOrEmpty(clienteActualizado.Ambiente) ? clienteActualizado.Ambiente : clienteExistente.Ambiente;
                 clienteExistente.UserDte = clienteActualizado.UserDte ?? clienteExistente.UserDte;  
                 clienteExistente.Imagen = !string.IsNullOrEmpty(clienteActualizado.Imagen) ? clienteActualizado.Imagen : clienteExistente.Imagen;
+                clienteExistente.Facebook = !string.IsNullOrEmpty(clienteActualizado.Facebook) ? clienteActualizado.Facebook : clienteExistente.Facebook;
+                clienteExistente.Whatsapp = !string.IsNullOrEmpty(clienteActualizado.Whatsapp) ? clienteActualizado.Whatsapp : clienteExistente.Whatsapp;
+                clienteExistente.Instagram = !string.IsNullOrEmpty(clienteActualizado.Instagram) ? clienteActualizado.Instagram : clienteExistente.Instagram;
                 // Campos boolean - actualizar solo si vienen definidos
                 if (clienteActualizado.IsDeclarante != null)
                     clienteExistente.IsDeclarante = clienteActualizado.IsDeclarante;
                 if (clienteActualizado.IsDte != null)
                     clienteExistente.IsDte = clienteActualizado.IsDte;
 
-                // NO tocar: Token, FechaRegistro, EstadoCliente
+                // NO tocar: Token, FechaRegistro
                 await contabsv_context.SaveChangesAsync();
                 return NoContent();
             }

@@ -70,7 +70,8 @@ namespace ApiContabsv.Controllers
                         codigoMunicipio = _context.Municipios
                             .Where(mu => mu.Id == m.IdMunicipio)
                             .Select(mu => mu.Codigo)
-                            .FirstOrDefault()
+                            .FirstOrDefault(),
+                        m.CuentaBolson                  
                     })
                     .ToListAsync();
 
@@ -169,7 +170,7 @@ namespace ApiContabsv.Controllers
                 cp.IdActividadEconomica = c.IdActividadEconomica;
                 cp.IdDepartamento = c.IdDepartamento;
                 cp.IdMunicipio = c.IdMunicipio;
-
+                cp.CuentaBolson = c.CuentaBolson;
                 // Guardar los cambios en la base de datos
                 await _context.SaveChangesAsync();
                 return NoContent();

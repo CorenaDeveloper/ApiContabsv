@@ -109,6 +109,12 @@ public partial class Venta
 
     public string EstadoEnvio { get; set; }
 
+    public string NombreBolson { get; set; }
+
+    public string TelefonoBolson { get; set; }
+
+    public string DireccionBolson { get; set; }
+
     public virtual ClaseDocumento IdClaseDocumentoNavigation { get; set; }
 
     public virtual ClientexClt IdClienteCitNavigation { get; set; }

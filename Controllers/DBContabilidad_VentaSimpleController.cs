@@ -155,30 +155,43 @@ namespace ApiContabsv.Controllers
     }
 }
 //{
-//   "idCliente": 1,
+//  "idCliente": 1,
+//  "idClienteCIt": 1,
 //  "numeroDocumento": "TK-00001",
-//  "nombreCliente": "Cliente General",
 //  "formaPago": "Efectivo",
 //  "usuarioRegistro": "admin@contabsv.com",
 //  "observaciones": "Venta de mostrador",
+//  "tipoEnvio": "Retiro",
+//  "costoEnvio": 0,
+//  "direccionEnvio": "",
+//  "contraEntrega": false,
+//  "nombreBolson": "Juan Pérez",
+//  "telefonoBolson": "71234567",
+//  "direccionBolson": "Col. Escalón, San Salvador",
 //  "productos": [
 //    {
 //        "idProducto": 1,
 //      "codigoProducto": "LAV-001",
 //      "sku": "LAV-SAM-18",
 //      "descripcion": "Lavadora Samsung 18Kg",
+//      "unidadMedida": "Unidad",
 //      "cantidad": 2,
 //      "precioUnitario": 550.00,
-//      "costoUnitario": 400.00
+//      "descuento": 0,
+//      "peso": 0,
+//      "volumen": 0
 //    },
 //    {
 //        "idProducto": 2,
 //      "codigoProducto": "REF-001",
 //      "sku": "REF-LG-20",
 //      "descripcion": "Refrigerador LG 20 pies",
+//      "unidadMedida": "Unidad",
 //      "cantidad": 1,
 //      "precioUnitario": 850.00,
-//      "costoUnitario": 650.00
+//      "descuento": 0,
+//      "peso": 0,
+//      "volumen": 0
 //    }
 //  ]
 //}

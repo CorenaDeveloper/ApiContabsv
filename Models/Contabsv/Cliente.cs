@@ -73,6 +73,12 @@ public partial class Cliente
 
     public string Ambiente { get; set; }
 
+    public string Facebook { get; set; }
+
+    public string Instagram { get; set; }
+
+    public string Whatsapp { get; set; }
+
     public virtual ICollection<HistorialPago> HistorialPagos { get; set; } = new List<HistorialPago>();
 
     public virtual ICollection<Suscripcione> Suscripciones { get; set; } = new List<Suscripcione>();

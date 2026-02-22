@@ -87,6 +87,10 @@ public partial class ContabsvContext : DbContext
                 .IsUnicode(false)
                 .HasDefaultValue("activo")
                 .HasColumnName("estadoCliente");
+            entity.Property(e => e.Facebook)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("facebook");
             entity.Property(e => e.FechaRegistro)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
@@ -98,6 +102,10 @@ public partial class ContabsvContext : DbContext
                 .HasMaxLength(500)
                 .IsUnicode(false)
                 .HasColumnName("imagen");
+            entity.Property(e => e.Instagram)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("instagram");
             entity.Property(e => e.IsDeclarante).HasColumnName("isDeclarante");
             entity.Property(e => e.IsDte).HasColumnName("isDte");
             entity.Property(e => e.NitCliente)
@@ -148,6 +156,10 @@ public partial class ContabsvContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("user_hacienda");
+            entity.Property(e => e.Whatsapp)
+                .HasMaxLength(120)
+                .IsUnicode(false)
+                .HasColumnName("whatsapp");
         });
 
         modelBuilder.Entity<HistorialPago>(entity =>

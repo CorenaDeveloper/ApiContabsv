@@ -1,13 +1,13 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "ContabsvContext",
+   "ContextClassName": "ContabilidadContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
    "MinimumProductVersion": "2.6.1186",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models\/Contabsv",
+   "OutputPath": "Models\/Contabilidad",
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "ApiContabsv",
    "Schemas": null,
@@ -16,79 +16,99 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[cliente]",
+         "Name": "[dbo].[actividades_economicas]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[historialPagos]",
+         "Name": "[dbo].[cat_tipo_item]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[inv_categorias]",
+         "Name": "[dbo].[ClaseDocumento]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[inv_marcas]",
+         "Name": "[dbo].[Clasificacion]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[inv_movimientos]",
+         "Name": "[dbo].[clientexClt]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[inv_productos]",
+         "Name": "[dbo].[Compras]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[inv_stock]",
+         "Name": "[dbo].[departamentos]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[inv_tipos_producto]",
+         "Name": "[dbo].[municipios]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[suscripcionDetalle]",
+         "Name": "[dbo].[Operaciones]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[suscripciones]",
+         "Name": "[dbo].[Proveedores]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[UsuariosFirebase]",
+         "Name": "[dbo].[Resolucion]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[vw_suscripciones_activas]",
+         "Name": "[dbo].[Sector]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoDocumento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoOperacionCG]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VentaConsumidor]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VentaContribuyentes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Ventas]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VentasDetalle]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[vw_ReporteProfit]",
          "ObjectType": 3
       },
       {
-         "Name": "[dbo].[Crud_ClientexClt]",
+         "Name": "[dbo].[sp_AnularVentaSimple]",
          "ObjectType": 1
       },
       {
-         "Name": "[dbo].[Crud_DataCliente]",
+         "Name": "[dbo].[sp_CalcularCostoFIFO]",
          "ObjectType": 1
       },
       {
-         "Name": "[dbo].[Crud_Proveedores]",
+         "Name": "[dbo].[sp_ListarVentas]",
          "ObjectType": 1
       },
       {
-         "Name": "[dbo].[DataCliente]",
+         "Name": "[dbo].[sp_RegistrarVenta]",
          "ObjectType": 1
       },
       {
-         "Name": "[dbo].[ListaClintesInt]",
-         "ObjectType": 1
-      },
-      {
-         "Name": "[dbo].[ListaProveedores]",
-         "ObjectType": 1
-      },
-      {
-         "Name": "[dbo].[sp_ListarExistencias]",
+         "Name": "[dbo].[sp_RegistrarVentaSimple]",
          "ObjectType": 1
       }
    ],
