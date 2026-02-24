@@ -34,8 +34,8 @@ namespace ApiContabsv.Controllers
                     return NotFound("Suscripción no encontrada");
 
                 var monto = suscripcion.SuscripcionDetalles
-                    .Where(d => d.Activo == true && d.TipoCobro == "mensual")
-                    .Sum(d => d.PrecioUnitario);
+                            .Where(d => d.Activo == true)
+                            .Sum(d => d.PrecioUnitario);
 
                 var cliente = suscripcion.IdClienteNavigation;
                 var descripcion = $"Pago suscripción ContabSV - {cliente.NombreComercial ?? cliente.NombreRazonSocial}";
@@ -49,7 +49,7 @@ namespace ApiContabsv.Controllers
 
                 if (result.Success)
                 {
-                   
+
                     var pago = new HistorialPago
                     {
                         IdSuscripcion = request.IdSuscripcion,
@@ -58,11 +58,11 @@ namespace ApiContabsv.Controllers
                         Monto = monto,
                         MetodoPago = "wompi",
                         EstadoPago = "pendiente",
-                        PaypalPaymentId = result.Referencia, 
+                        PaypalPaymentId = result.Referencia,
                         DetallePago = JsonSerializer.Serialize(new
                         {
                             detalle = suscripcion.SuscripcionDetalles
-                                .Where(d => d.Activo == true && d.TipoCobro == "mensual")
+                                .Where(d => d.Activo == true)
                                 .Select(d => new { concepto = d.Concepto, monto = d.PrecioUnitario }),
                             total = monto
                         }),
@@ -105,7 +105,7 @@ namespace ApiContabsv.Controllers
                     return NotFound("Suscripción no encontrada");
 
                 var monto = suscripcion.SuscripcionDetalles
-                    .Where(d => d.Activo == true && d.TipoCobro == "mensual")
+                    .Where(d => d.Activo == true)
                     .Sum(d => d.PrecioUnitario);
 
                 // Verificar si ya existe un pago para este enlace
@@ -138,7 +138,7 @@ namespace ApiContabsv.Controllers
                     DetallePago = System.Text.Json.JsonSerializer.Serialize(new
                     {
                         detalle = suscripcion.SuscripcionDetalles
-                            .Where(d => d.Activo == true && d.TipoCobro == "mensual")
+                            .Where(d => d.Activo == true)
                             .Select(d => new { concepto = d.Concepto, monto = d.PrecioUnitario }),
                         total = monto
                     }),
@@ -232,7 +232,7 @@ namespace ApiContabsv.Controllers
             catch (Exception ex)
             {
                 Console.WriteLine($"WEBHOOK ERROR: {ex.Message}");
-                return Ok(new { mensaje = "Procesado" }); 
+                return Ok(new { mensaje = "Procesado" });
             }
         }
 

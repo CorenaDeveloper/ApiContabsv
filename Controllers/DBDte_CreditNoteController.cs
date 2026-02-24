@@ -37,74 +37,74 @@ namespace ApiContabsv.Controllers
 
         /// <summary>
         /// CREAR NOTA DE CRÉDITO ELECTRÓNICA
-        /// {
-        ////  "clientId": 5,
-        ////  "userId": 6,
-        ////  "branchOfficeId": 1002,
-        ////  "items": [
-        ////    {
-        ////      "type": 1,
-        ////      "description": "Unidad de transporte",
-        ////      "quantity": 1,
-        ////      "unit_measure": 59,
-        ////      "unit_price": 132.74,
-        ////      "discount": 0,
-        ////      "code": "PRD20260114094053",
-        ////      "non_subject_sale": 0,
-        ////      "exempt_sale": 0,
-        ////      "taxed_sale": 132.74,
-        ////      "taxes": [
-        ////        "20"
-        ////      ],
-        ////      "related_document_number": "E84889AB-6562-4492-81E9-2E28833D4149"
-        ////    }
-        ////  ],
-        ////  "receiver": {
-        ////    "name": "Distribuidora Salvadoreña, S.A. de C.V",
-        ////    "nit": "06142501071049",
-        ////    "nrc": "1774110",
-        ////    "activity_code": "11049",
-        ////    "activity_description": "Elaboración de bebidas no alcohólicas",
-        ////    "address": {
-        ////      "department": "05",
-        ////      "municipality": "25",
-        ////      "complement": "Final Avenida San Martin, # 4-7 Entre calle 6 y 8 calle oriente, Santa Tecla"
-        ////    },
-        ////    "phone": "20222090",
-        ////    "email": "ItCompras@gmail.com"
-        ////  },
-        ////  "modelType": 1,
-        ////  "summary": {
-        ////    "total_non_subject": 0,
-        ////    "total_exempt": 0,
-        ////    "total_taxed": 132.74,
-        ////    "sub_total": 132.74,
-        ////    "non_subject_discount": 0,
-        ////    "exempt_discount": 0,
-        ////    "discount_percentage": 0,
-        ////    "total_discount": 0,
-        ////    "sub_total_sales": 132.74,
-        ////    "total_operation": 148.67,
-        ////    "total_to_pay": 148.67,
-        ////    "operation_condition": 1,
-        ////    "taxed_discount": 0,
-        ////    "iva_perception": 0,
-        ////    "iva_retention": 1.33,
-        ////    "income_retention": 0,
-        ////    "balance_in_favor": 0,
-        ////    "total_iva": 17.26
-        ////  },
-        ////  "environment": "00",
-        ////  "sendToHacienda": true,
-        ////  "related_docs": [
-        ////    {
-        ////      "document_type": "03",
-        ////      "generation_type": 1,
-        ////      "document_number": "E84889AB-6562-4492-81E9-2E28833D4149",
-        ////      "emission_date": "2026-02-03T00:00:00"
-        ////    }
-        ////  ]
-        ////}
+    ////    / {
+    ////      "clientId": 5,
+    ////      "userId": 6,
+    ////      "branchOfficeId": 1002,
+    ////      "items": [
+    ////        {
+    ////          "type": 1,
+    ////          "description": "Unidad de transporte",
+    ////          "quantity": 1,
+    ////          "unit_measure": 59,
+    ////          "unit_price": 132.74,
+    ////          "discount": 0,
+    ////          "code": "PRD20260114094053",
+    ////          "non_subject_sale": 0,
+    ////          "exempt_sale": 0,
+    ////          "taxed_sale": 132.74,
+    ////          "taxes": [
+    ////            "20"
+    ////          ],
+    ////          "related_document_number": "E84889AB-6562-4492-81E9-2E28833D4149"
+    ////        }
+    ////      ],
+    ////      "receiver": {
+    ////        "name": "Distribuidora Salvadoreña, S.A. de C.V",
+    ////        "nit": "06142501071049",
+    ////        "nrc": "1774110",
+    ////        "activity_code": "11049",
+    ////        "activity_description": "Elaboración de bebidas no alcohólicas",
+    ////        "address": {
+    ////          "department": "05",
+    ////          "municipality": "25",
+    ////          "complement": "Final Avenida San Martin, # 4-7 Entre calle 6 y 8 calle oriente, Santa Tecla"
+    ////        },
+    ////        "phone": "20222090",
+    ////        "email": "ItCompras@gmail.com"
+    ////      },
+    ////      "modelType": 1,
+    ////      "summary": {
+    ////"total_non_subject": 0,
+    ////        "total_exempt": 0,
+    ////        "total_taxed": 132.74,
+    ////        "sub_total": 132.74,
+    ////        "non_subject_discount": 0,
+    ////        "exempt_discount": 0,
+    ////        "discount_percentage": 0,
+    ////        "total_discount": 0,
+    ////        "sub_total_sales": 132.74,
+    ////        "total_operation": 148.67,
+    ////        "total_to_pay": 148.67,
+    ////        "operation_condition": 1,
+    ////        "taxed_discount": 0,
+    ////        "iva_perception": 0,
+    ////        "iva_retention": 1.33,
+    ////        "income_retention": 0,
+    ////        "balance_in_favor": 0,
+    ////        "total_iva": 17.26
+    ////      },
+    ////      "environment": "00",
+    ////      "sendToHacienda": true,
+    ////      "related_docs": [
+    ////        {
+    ////          "document_type": "03",
+    ////          "generation_type": 1,
+    ////          "document_number": "E84889AB-6562-4492-81E9-2E28833D4149",
+    ////          "emission_date": "2026-02-03T00:00:00"
+    ////        }
+    ////      ]
+    ////    }
         /// </summary>
         [HttpPost]
         public async Task<ActionResult> CreateCreditNote([FromBody] CreateCreditNoteRequestDTO request)
