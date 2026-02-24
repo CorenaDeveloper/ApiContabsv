@@ -628,7 +628,7 @@ namespace ApiContabsv.Controllers
                 montoTotalOperacion = summary.TotalOperation,
                 totalNoGravado = summary.TotalNonTaxed,
                 totalPagar = summary.TotalToPay,
-                totalLetras = NumberToWords(summary.TotalToPay),
+                totalLetras = ValorLetras.Convertir(summary.TotalToPay),
                 saldoFavor = summary.BalanceInFavor,
                 condicionOperacion = summary.OperationCondition,
                 pagos = summary.PaymentTypes?.Select(p => new
@@ -652,13 +652,6 @@ namespace ApiContabsv.Controllers
                 numeroDocumento = rd.DocumentNumber,
                 fechaEmision = rd.EmissionDate.ToString("yyyy-MM-dd")
             }).ToArray();
-        }
-
-        private string NumberToWords(decimal amount)
-        {
-            var intPart = (int)Math.Floor(amount);
-            var decPart = (int)((amount - intPart) * 100);
-            return $"{intPart:N0} CON {decPart:00}/100 DOLARES".Replace(",", " ");
         }
 
         #endregion

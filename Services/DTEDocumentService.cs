@@ -1,4 +1,5 @@
 ﻿using ApiContabsv.DTO.DB_DteDTO;
+using ApiContabsv.Models.Contabilidad;
 using ApiContabsv.Models.Dte;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection.Metadata;
@@ -18,12 +19,14 @@ namespace ApiContabsv.Services
     public class DTEDocumentService : IDTEDocumentService
     {
         private readonly dteContext _context;
+        private readonly ContabilidadContext _contabilidadContext;
         private readonly ILogger<DTEDocumentService> _logger;
 
-        public DTEDocumentService(dteContext context, ILogger<DTEDocumentService> logger)
+        public DTEDocumentService(dteContext context, ILogger<DTEDocumentService> logger, ContabilidadContext contabilidadContext)
         {
             _context = context;
             _logger = logger;
+            _contabilidadContext = contabilidadContext;
         }
 
         public async Task<int> SaveDocument(SaveDocumentRequest request)
@@ -127,6 +130,71 @@ namespace ApiContabsv.Services
                 var details = await _context.DteDetails
                     .FirstOrDefaultAsync(d => d.DteId == dteId);
 
+                string? tipoEstablecimiento = null;
+                string? codEstable = null;
+
+                if (!string.IsNullOrEmpty(document.JsonContent))
+                {
+                    try
+                    {
+                        var jsonDoc = System.Text.Json.JsonDocument.Parse(document.JsonContent);
+                        var root = jsonDoc.RootElement;
+
+                        if (root.TryGetProperty("emisor", out var emisor))
+                        {
+                            if (emisor.TryGetProperty("tipoEstablecimiento", out var tipoEst))
+                                tipoEstablecimiento = tipoEst.GetString();
+
+                            if (emisor.TryGetProperty("codEstable", out var cod))
+                                codEstable = cod.GetString();
+                        }
+                    }
+                    catch(Exception ex) {
+                        return null;
+                    }
+                }
+
+                var user = await _context.Users
+                    .Include(u => u.BranchOffices)
+                    .ThenInclude(b => b.Addresses)
+                    .FirstOrDefaultAsync(u => u.Id == userdte);
+
+                BranchOffice? branch = null;
+
+                if (!string.IsNullOrEmpty(codEstable))
+                {
+                    // Primero intentar por código de establecimiento exacto
+                    branch = user?.BranchOffices
+                        .FirstOrDefault(b => b.IsActive && b.EstablishmentCode == codEstable);
+                }
+
+                if (branch == null && !string.IsNullOrEmpty(tipoEstablecimiento))
+                {
+                    // Si no encontró por código, buscar por tipo
+                    branch = user?.BranchOffices
+                        .FirstOrDefault(b => b.IsActive && b.EstablishmentType == tipoEstablecimiento);
+                }
+
+                branch ??= user?.BranchOffices.FirstOrDefault(b => b.IsActive);
+
+                var address = branch?.Addresses?.FirstOrDefault();
+
+                string? nombreMunicipio = null;
+                string? nombreDepartamento = null;
+
+                if (address != null)
+                {
+                    nombreMunicipio = await _contabilidadContext.Municipios
+                        .Where(m => m.Codigo == address.Municipality)
+                        .Select(m => m.Nombre)
+                        .FirstOrDefaultAsync();
+
+                    nombreDepartamento = await _contabilidadContext.Departamentos
+                        .Where(d => d.Codigodep == address.Department)
+                        .Select(d => d.Nombre)
+                        .FirstOrDefaultAsync();
+                }
+
                 return new DTEDocumentResponse
                 {
                     Id = document.Id,
@@ -140,7 +208,34 @@ namespace ApiContabsv.Services
                     JsonContent = document.JsonContent,
                     CreatedAt = document.CreatedAt,
                     UpdatedAt = document.UpdatedAt,
-                    Ambiente = document.Ambiente
+                    ErrorMessage = document.ErrorMessage,
+                    ErrorDetails = document.ErrorDetails,
+                    ResponseCode = document.ResponseCode,
+                    ReceptionStamp = document.ReceptionStamp,
+                    Ambiente = document.Ambiente,
+
+                    // Datos del usuario
+                    UserNit = user?.Nit,
+                    UserNrc = user?.Nrc,
+                    UserBusinessName = user?.BusinessName,
+                    UserCommercialName = user?.CommercialName,
+                    UserEmail = user?.Email,
+                    UserPhone = user?.Phone,
+                    UserEconomicActivity = user?.EconomicActivity,
+                    UserEconomicActivityDesc = user?.EconomicActivityDesc,
+
+                    // Datos de sucursal y dirección (basados en el establecimiento del documento)
+                    BranchEstablishmentCode = branch?.EstablishmentCode,
+                    BranchPosCode = branch?.PosCode,
+                    BranchEstablishmentType = branch?.EstablishmentType,
+                    BranchPhone = branch?.Phone,
+                    BranchEmail = branch?.Email,
+                    AddressDepartment = address?.Department,
+                    NameDepartment = nombreDepartamento ,
+                    NameMunicipality = nombreMunicipio,
+                    AddressMunicipality = address?.Municipality,
+                    AddressComplement = address?.Address1 +
+                        (!string.IsNullOrEmpty(address?.Complement) ? ", " + address.Complement : "")
                 };
             }
             catch (Exception ex)

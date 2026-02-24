@@ -638,7 +638,7 @@ namespace ApiContabsv.Controllers
                 totalIva = summary.TotalIva,
                 tributos = (string[]?)null,
                 reteRenta = 0.0,
-                totalLetras = "NOVENTA Y NUEVE CON 05/100 DOLARES",
+                totalLetras = ValorLetras.Convertir(summary.TotalToPay),
                 saldoFavor = 0.0,
                 numPagoElectronico = (string?)null,
                

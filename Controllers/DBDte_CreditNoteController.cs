@@ -531,17 +531,11 @@ namespace ApiContabsv.Controllers
                 ivaPerci1 = summary.IvaPerception,
                 reteRenta = summary.IncomeRetention,
                 montoTotalOperacion = summary.TotalOperation,
-                totalLetras = NumberToWords(summary.TotalToPay),
+                totalLetras = ValorLetras.Convertir(summary.TotalToPay),
                 condicionOperacion = summary.OperationCondition
             };
         }
 
-        private string NumberToWords(decimal amount)
-        {
-            var intPart = (int)Math.Floor(amount);
-            var decPart = (int)((amount - intPart) * 100);
-            return $"{intPart:N0} CON {decPart:00}/100 DOLARES".Replace(",", " ");
-        }
         private object[]? MapRelatedDocs(List<CreditNoteRelatedDocRequestDTO>? relatedDocs)
         {
             if (relatedDocs == null || !relatedDocs.Any())

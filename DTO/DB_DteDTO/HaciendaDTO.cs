@@ -36,6 +36,27 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? ResponseCode { get; set; }
         public string? ReceptionStamp { get; set; }
         public string? Ambiente { get; set; }
+        // --- DATOS DEL USUARIO EMISOR ---
+        public string? UserNit { get; set; }
+        public string? UserNrc { get; set; }
+        public string? UserBusinessName { get; set; }
+        public string? UserCommercialName { get; set; }
+        public string? UserEmail { get; set; }
+        public string? UserPhone { get; set; }
+        public string? UserEconomicActivity { get; set; }
+        public string? UserEconomicActivityDesc { get; set; }
+
+        // --- DATOS DE SUCURSAL Y DIRECCIÓN ---
+        public string? BranchEstablishmentCode { get; set; }
+        public string? BranchPosCode { get; set; }
+        public string? BranchEstablishmentType { get; set; }
+        public string? BranchPhone { get; set; }
+        public string? BranchEmail { get; set; }
+        public string? AddressDepartment { get; set; }
+        public string? NameDepartment { get; set; }
+        public string? NameMunicipality { get; set; }
+        public string? AddressMunicipality { get; set; }
+        public string? AddressComplement { get; set; }
     }
 
     public class HaciendaTransmissionResult

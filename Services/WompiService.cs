@@ -12,7 +12,7 @@ namespace ApiContabsv.Services
         private readonly string _baseUrl;
         private string _accessToken;
         private DateTime _tokenExpiration;
-
+        public string ApiSecret => _clientSecret;
         public WompiService(IConfiguration configuration)
         {
             _httpClient = new HttpClient();

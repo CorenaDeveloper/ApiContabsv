@@ -5,6 +5,7 @@
     {
         public bool Success { get; set; }
         public string TransactionId { get; set; }
+        public string Referencia { get; set; }
         public string CheckoutUrl { get; set; }
         public string Error { get; set; }
     }
