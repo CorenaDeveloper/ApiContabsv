@@ -17,6 +17,7 @@ namespace ApiContabsv.Controllers
         private readonly IConfiguration _configuration;
         private readonly IHaciendaService _haciendaService;
         private readonly IDTEDocumentService _documentService;
+        private readonly IContingencyService _contingencyService;
         private readonly ILogger<DBDte_CreditNoteController> _logger;
 
         public DBDte_CreditNoteController(
@@ -25,6 +26,7 @@ namespace ApiContabsv.Controllers
             IConfiguration configuration,
             IHaciendaService haciendaService,
             IDTEDocumentService documentService,
+            IContingencyService contingencyService,
             ILogger<DBDte_CreditNoteController> logger)
         {
             _context = context;
@@ -32,79 +34,80 @@ namespace ApiContabsv.Controllers
             _configuration = configuration;
             _haciendaService = haciendaService;
             _documentService = documentService;
+            _contingencyService = contingencyService;
             _logger = logger;
         }
 
         /// <summary>
         /// CREAR NOTA DE CRÉDITO ELECTRÓNICA
-    ////    / {
-    ////      "clientId": 5,
-    ////      "userId": 6,
-    ////      "branchOfficeId": 1002,
-    ////      "items": [
-    ////        {
-    ////          "type": 1,
-    ////          "description": "Unidad de transporte",
-    ////          "quantity": 1,
-    ////          "unit_measure": 59,
-    ////          "unit_price": 132.74,
-    ////          "discount": 0,
-    ////          "code": "PRD20260114094053",
-    ////          "non_subject_sale": 0,
-    ////          "exempt_sale": 0,
-    ////          "taxed_sale": 132.74,
-    ////          "taxes": [
-    ////            "20"
-    ////          ],
-    ////          "related_document_number": "E84889AB-6562-4492-81E9-2E28833D4149"
-    ////        }
-    ////      ],
-    ////      "receiver": {
-    ////        "name": "Distribuidora Salvadoreña, S.A. de C.V",
-    ////        "nit": "06142501071049",
-    ////        "nrc": "1774110",
-    ////        "activity_code": "11049",
-    ////        "activity_description": "Elaboración de bebidas no alcohólicas",
-    ////        "address": {
-    ////          "department": "05",
-    ////          "municipality": "25",
-    ////          "complement": "Final Avenida San Martin, # 4-7 Entre calle 6 y 8 calle oriente, Santa Tecla"
-    ////        },
-    ////        "phone": "20222090",
-    ////        "email": "ItCompras@gmail.com"
-    ////      },
-    ////      "modelType": 1,
-    ////      "summary": {
-    ////"total_non_subject": 0,
-    ////        "total_exempt": 0,
-    ////        "total_taxed": 132.74,
-    ////        "sub_total": 132.74,
-    ////        "non_subject_discount": 0,
-    ////        "exempt_discount": 0,
-    ////        "discount_percentage": 0,
-    ////        "total_discount": 0,
-    ////        "sub_total_sales": 132.74,
-    ////        "total_operation": 148.67,
-    ////        "total_to_pay": 148.67,
-    ////        "operation_condition": 1,
-    ////        "taxed_discount": 0,
-    ////        "iva_perception": 0,
-    ////        "iva_retention": 1.33,
-    ////        "income_retention": 0,
-    ////        "balance_in_favor": 0,
-    ////        "total_iva": 17.26
-    ////      },
-    ////      "environment": "00",
-    ////      "sendToHacienda": true,
-    ////      "related_docs": [
-    ////        {
-    ////          "document_type": "03",
-    ////          "generation_type": 1,
-    ////          "document_number": "E84889AB-6562-4492-81E9-2E28833D4149",
-    ////          "emission_date": "2026-02-03T00:00:00"
-    ////        }
-    ////      ]
-    ////    }
+        ////    / {
+        ////      "clientId": 5,
+        ////      "userId": 6,
+        ////      "branchOfficeId": 1002,
+        ////      "items": [
+        ////        {
+        ////          "type": 1,
+        ////          "description": "Unidad de transporte",
+        ////          "quantity": 1,
+        ////          "unit_measure": 59,
+        ////          "unit_price": 132.74,
+        ////          "discount": 0,
+        ////          "code": "PRD20260114094053",
+        ////          "non_subject_sale": 0,
+        ////          "exempt_sale": 0,
+        ////          "taxed_sale": 132.74,
+        ////          "taxes": [
+        ////            "20"
+        ////          ],
+        ////          "related_document_number": "E84889AB-6562-4492-81E9-2E28833D4149"
+        ////        }
+        ////      ],
+        ////      "receiver": {
+        ////        "name": "Distribuidora Salvadoreña, S.A. de C.V",
+        ////        "nit": "06142501071049",
+        ////        "nrc": "1774110",
+        ////        "activity_code": "11049",
+        ////        "activity_description": "Elaboración de bebidas no alcohólicas",
+        ////        "address": {
+        ////          "department": "05",
+        ////          "municipality": "25",
+        ////          "complement": "Final Avenida San Martin, # 4-7 Entre calle 6 y 8 calle oriente, Santa Tecla"
+        ////        },
+        ////        "phone": "20222090",
+        ////        "email": "ItCompras@gmail.com"
+        ////      },
+        ////      "modelType": 1,
+        ////      "summary": {
+        ////"total_non_subject": 0,
+        ////        "total_exempt": 0,
+        ////        "total_taxed": 132.74,
+        ////        "sub_total": 132.74,
+        ////        "non_subject_discount": 0,
+        ////        "exempt_discount": 0,
+        ////        "discount_percentage": 0,
+        ////        "total_discount": 0,
+        ////        "sub_total_sales": 132.74,
+        ////        "total_operation": 148.67,
+        ////        "total_to_pay": 148.67,
+        ////        "operation_condition": 1,
+        ////        "taxed_discount": 0,
+        ////        "iva_perception": 0,
+        ////        "iva_retention": 1.33,
+        ////        "income_retention": 0,
+        ////        "balance_in_favor": 0,
+        ////        "total_iva": 17.26
+        ////      },
+        ////      "environment": "00",
+        ////      "sendToHacienda": true,
+        ////      "related_docs": [
+        ////        {
+        ////          "document_type": "03",
+        ////          "generation_type": 1,
+        ////          "document_number": "E84889AB-6562-4492-81E9-2E28833D4149",
+        ////          "emission_date": "2026-02-03T00:00:00"
+        ////        }
+        ////      ]
+        ////    }
         /// </summary>
         [HttpPost]
         public async Task<ActionResult> CreateCreditNote([FromBody] CreateCreditNoteRequestDTO request)
@@ -118,9 +121,9 @@ namespace ApiContabsv.Controllers
                 if (user == null)
                     return BadRequest($"Usuario con ID {request.UserId} no encontrado");
 
-                // 2. validar que la sucursal pertenezca al usuario
+                // 2. Validar que la sucursal pertenezca al usuario
                 var branchOffice = await _context.BranchOffices
-                                   .Include(b => b.Addresses)  // Si tienes relación con direcciones
+                                   .Include(b => b.Addresses)
                                    .FirstOrDefaultAsync(b => b.Id == request.BranchOfficeId
                                     && b.UserId == user.Id
                                     && b.IsActive);
@@ -128,23 +131,21 @@ namespace ApiContabsv.Controllers
                 if (branchOffice == null)
                     return BadRequest($"Sucursal con ID {request.BranchOfficeId} no encontrada o inactiva");
 
-                // 3. obtener el firmador optimo para el usuario
+                // 3. Obtener el firmador optimo para el usuario
                 var optimalSigner = await GetOptimalSignerForUser(request.UserId);
                 if (optimalSigner == null)
                     return BadRequest("No hay firmadores disponibles para el usuario");
 
-                // 4. verificamos que el certificado exista
+                // 4. Verificamos que el certificado exista
                 var certificatePath = Path.Combine(optimalSigner.CertificatePath, $"{user.Nit}.crt");
                 if (!System.IO.File.Exists(certificatePath))
                     return BadRequest($"Certificado no encontrado para NIT: {user.Nit}");
 
-                // 5. generamos un numero de control interno valido
+                // 5. Generamos un numero de control interno valido
                 var establishmentCode = branchOffice.EstablishmentCode ?? "";
                 var posCode = branchOffice.PosCode ?? "";
 
-
-                // 6. Obtener el siguiente número de secuencia
-                // para el tipo de documento 01 (Factura)
+                // 6. Obtener el siguiente número de secuencia para tipo "05" (Nota de Crédito)
                 var sequenceNumber = await _documentService.GetNextSequenceNumber(
                     user.Id, "05", establishmentCode, posCode, request.Environment ?? "00");
 
@@ -153,11 +154,10 @@ namespace ApiContabsv.Controllers
                 // 7. Generamos un DTE unico
                 dteId = Guid.NewGuid().ToString().ToUpper();
 
-                // 8.Contruir documento dete con datos de la sucursal, usuario y request
-                // Crear el documento DTE como factura consumidor final
+                // 8. Construir documento DTE
                 var dteDocument = BuildCreditNoteDocument(user, branchOffice, request, controlNumber, dteId, "05");
 
-                // 9. Firmador de documento
+                // 9. Firmar documento
                 var signResult = await SignDocument(user, dteDocument, optimalSigner);
                 if (!signResult.Success)
                 {
@@ -169,7 +169,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 10. extraer JWT firmador
+                // 10. Extraer JWT firmado
                 var signedJWT = ExtractJWTFromSignerResponse(signResult.Response);
                 if (string.IsNullOrEmpty(signedJWT))
                 {
@@ -180,7 +180,7 @@ namespace ApiContabsv.Controllers
                     });
                 }
 
-                // 11. Guardamos en la base de datatos datos antes de enviar 
+                // 11. Guardamos en BD antes de enviar a Hacienda
                 var saveRequest = new SaveDocumentRequest
                 {
                     DteId = dteId,
@@ -198,10 +198,9 @@ namespace ApiContabsv.Controllers
 
                 var documentId = await _documentService.SaveDocument(saveRequest);
 
-                // 12. Enviamos hacienda (Transmision) y actualizamos estado segun la repuesta
+                // 12. Transmisión a Hacienda con manejo de contingencia
                 HaciendaTransmissionResult? transmissionResult = null;
                 string finalDocumentStatus = "FIRMADO";
-
 
                 if (request.SendToHacienda != false)
                 {
@@ -215,51 +214,93 @@ namespace ApiContabsv.Controllers
 
                     if (transmissionResult != null)
                     {
-                        string errorMessage = null;
-                        string errorDetails = null;
-                        string responseCode = null;
-
                         if (transmissionResult.Success)
                         {
-                            //  Documento procesado exitosamente
+                            // ✅ Procesado exitosamente por Hacienda
                             finalDocumentStatus = transmissionResult.Status ?? "PROCESADO";
+
+                            await _documentService.UpdateDocumentStatus(
+                                dteId,
+                                finalDocumentStatus,
+                                transmissionResult.ReceptionStamp,
+                                null,
+                                null,
+                                transmissionResult.RawResponse,
+                                transmissionResult.ResponseCode);
                         }
                         else if (transmissionResult.Status == "RECHAZADO")
                         {
-                            //  Documento rechazado por Hacienda (NO va a contingencia)
+                            // ❌ Rechazado por Hacienda — NO va a contingencia, es definitivo
                             finalDocumentStatus = "RECHAZADO";
-                            errorMessage = transmissionResult.Error;
-                            errorDetails = transmissionResult.ErrorDetails;
-                            responseCode = transmissionResult.ResponseCode;
+
+                            await _documentService.UpdateDocumentStatus(
+                                dteId,
+                                finalDocumentStatus,
+                                transmissionResult.ReceptionStamp,
+                                transmissionResult.Error,
+                                transmissionResult.ErrorDetails,
+                                transmissionResult.RawResponse,
+                                transmissionResult.ResponseCode);
+                        }
+                        else if (_contingencyService.ShouldGoToContingency(transmissionResult))
+                        {
+                            // ⚠️ Error de red / MH caído → guardar en contingencia para reintentar
+                            finalDocumentStatus = "CONTINGENCIA";
+
+                            await _contingencyService.StoreInContingency(
+                                dteId: dteId,
+                                userId: user.Id,
+                                documentType: "05",
+                                signedJWT: signedJWT,
+                                userNit: user.Nit,
+                                ambiente: request.Environment ?? "00",
+                                version: 3,
+                                failedResult: transmissionResult);
+                        }
+                        else
+                        {
+                            // Error de negocio que no aplica contingencia
+                            finalDocumentStatus = "ERROR_TRANSMISION";
+
+                            await _documentService.UpdateDocumentStatus(
+                                dteId,
+                                finalDocumentStatus,
+                                transmissionResult.ReceptionStamp,
+                                transmissionResult.Error,
+                                transmissionResult.ErrorDetails,
+                                transmissionResult.RawResponse,
+                                transmissionResult.ResponseCode);
+                        }
+                    }
+                    else
+                    {
+                        // transmissionResult == null → problema de comunicación → contingencia
+                        if (_contingencyService.ShouldGoToContingency(null))
+                        {
+                            finalDocumentStatus = "CONTINGENCIA";
+
+                            await _contingencyService.StoreInContingency(
+                                dteId: dteId,
+                                userId: user.Id,
+                                documentType: "05",
+                                signedJWT: signedJWT,
+                                userNit: user.Nit,
+                                ambiente: request.Environment ?? "00",
+                                version: 3);
                         }
                         else
                         {
                             finalDocumentStatus = "ERROR_TRANSMISION";
-                            errorMessage = transmissionResult.Error;
-                            errorDetails = transmissionResult.ErrorDetails;
 
+                            await _documentService.UpdateDocumentStatus(
+                                dteId,
+                                finalDocumentStatus,
+                                null,
+                                "Error interno: transmissionResult es null",
+                                null,
+                                null,
+                                null);
                         }
-
-                        await _documentService.UpdateDocumentStatus(
-                           dteId,
-                           finalDocumentStatus,
-                           transmissionResult.ReceptionStamp,
-                           errorMessage,
-                           errorDetails,
-                           transmissionResult.RawResponse,
-                           responseCode);
-                    }
-                    else
-                    {
-                        finalDocumentStatus = "ERROR_TRANSMISION";
-                        await _documentService.UpdateDocumentStatus(
-                            dteId,
-                            finalDocumentStatus,
-                            null,
-                            "Error interno: transmissionResult es null",
-                            null,
-                            null,
-                            null);
                     }
                 }
 
@@ -302,14 +343,8 @@ namespace ApiContabsv.Controllers
             {
                 if (!string.IsNullOrEmpty(dteId))
                 {
-                    try
-                    {
-                        await _documentService.UpdateDocumentStatus(dteId, "ERROR");
-                    }
-                    catch (Exception saveEx)
-                    {
-                        _logger.LogError(saveEx, "Error actualizando estado a ERROR");
-                    }
+                    try { await _documentService.UpdateDocumentStatus(dteId, "ERROR"); }
+                    catch (Exception saveEx) { _logger.LogError(saveEx, "Error actualizando estado a ERROR"); }
                 }
 
                 return StatusCode(500, new
@@ -329,8 +364,7 @@ namespace ApiContabsv.Controllers
         public async Task<ActionResult<DTEDocumentResponse>> GetDocument(
             string dteId,
             int userdte,
-            string ambiente
-            )
+            string ambiente)
         {
             try
             {
@@ -362,14 +396,10 @@ namespace ApiContabsv.Controllers
                 DateTime? parsedEndDate = null;
 
                 if (!string.IsNullOrEmpty(startDate) && DateTime.TryParse(startDate, out DateTime start))
-                {
                     parsedStartDate = start;
-                }
 
                 if (!string.IsNullOrEmpty(endDate) && DateTime.TryParse(endDate, out DateTime end))
-                {
                     parsedEndDate = end;
-                }
 
                 var documents = await _documentService.GetDocumentsByUser(userId, parsedStartDate, parsedEndDate, "05", ambiente);
                 return Ok(documents);
@@ -380,16 +410,15 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        #region Helper Methods (igual que Invoice)
+        #region Helper Methods
 
         private object BuildCreditNoteDocument(User user, BranchOffice branchOffice, CreateCreditNoteRequestDTO request, string controlNumber, string dteId, string tipoDocumento)
         {
             return new
             {
-                // SECCIÓN IDENTIFICACION
                 identificacion = new
                 {
-                    version = 3, 
+                    version = 3,
                     ambiente = request.Environment ?? "00",
                     tipoDte = tipoDocumento,
                     numeroControl = controlNumber,
@@ -402,8 +431,6 @@ namespace ApiContabsv.Controllers
                     horEmi = DateTime.Now.ToString("HH:mm:ss"),
                     tipoMoneda = "USD"
                 },
-
-                // SECCIONES PRINCIPALES
                 emisor = MapEmisorFromUser(user, branchOffice),
                 receptor = MapReceptor(request.Receiver),
                 cuerpoDocumento = MapCreditNoteItems(request.Items),
@@ -423,18 +450,11 @@ namespace ApiContabsv.Controllers
         {
             var address = branchOffice.Addresses?.FirstOrDefault();
             if (address == null)
-            {
                 throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene dirección configurada");
-            }
             if (string.IsNullOrEmpty(branchOffice.EstablishmentCode))
-            {
                 throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene código de establecimiento configurado");
-            }
-
             if (string.IsNullOrEmpty(branchOffice.PosCode))
-            {
                 throw new InvalidOperationException($"La sucursal {branchOffice.Id} no tiene código de punto de venta configurado");
-            }
 
             return new
             {
@@ -462,10 +482,10 @@ namespace ApiContabsv.Controllers
 
             return new
             {
-                nit = receiver.DocumentNumber, 
+                nit = receiver.DocumentNumber,
                 nrc = receiver.Nrc,
                 nombre = receiver.Name,
-                nombreComercial = receiver.Name, 
+                nombreComercial = receiver.Name,
                 codActividad = receiver.ActivityCode,
                 descActividad = receiver.ActivityDescription,
                 direccion = receiver.Address != null ? new
@@ -525,7 +545,7 @@ namespace ApiContabsv.Controllers
                 descuExenta = summary.ExemptDiscount,
                 descuGravada = summary.TaxedDiscount,
                 totalDescu = summary.TotalDiscount,
-                tributos = tributos.ToArray(), 
+                tributos = tributos.ToArray(),
                 subTotal = summary.SubTotal,
                 ivaRete1 = summary.IvaRetention,
                 ivaPerci1 = summary.IvaPerception,
@@ -539,9 +559,7 @@ namespace ApiContabsv.Controllers
         private object[]? MapRelatedDocs(List<CreditNoteRelatedDocRequestDTO>? relatedDocs)
         {
             if (relatedDocs == null || !relatedDocs.Any())
-            {
-                return new object[0]; 
-            }
+                return new object[0];
 
             return relatedDocs.Select(doc => new
             {
@@ -588,11 +606,7 @@ namespace ApiContabsv.Controllers
             }
             catch (Exception ex)
             {
-                return new SigningResult
-                {
-                    Success = false,
-                    Error = ex.Message
-                };
+                return new SigningResult { Success = false, Error = ex.Message };
             }
         }
 

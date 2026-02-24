@@ -22,7 +22,6 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("🚀 Iniciando aplicación ApiContabsv");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -58,6 +57,8 @@ try
     builder.Services.AddScoped<IDTEDocumentService, DTEDocumentService>();
     builder.Services.AddSingleton<PayPalService>();
     builder.Services.AddSingleton<WompiService>();
+    builder.Services.AddScoped<IContingencyService, ContingencyService>();
+    builder.Services.AddHostedService<ContingencyRetransmissionJob>();
     // ============================================
     // CONFIGURACIÓN DE SERVICIOS BÁSICOS
     // ============================================

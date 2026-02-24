@@ -18,12 +18,14 @@ namespace ApiContabsv.Controllers
         private readonly IHaciendaService _haciendaService;
         private readonly IDTEDocumentService _documentService;
         private readonly ILogger<DBDte_CCFController> _logger;
+        private readonly IContingencyService _contingencyService;
 
         public DBDte_CCFController(
             dteContext context,
             IHttpClientFactory httpClientFactory,
             IConfiguration configuration,
             IHaciendaService haciendaService,
+            IContingencyService contingencyService,
             IDTEDocumentService documentService,
             ILogger<DBDte_CCFController> logger)
         {
@@ -31,6 +33,7 @@ namespace ApiContabsv.Controllers
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
             _haciendaService = haciendaService;
+            _contingencyService = contingencyService;
             _documentService = documentService;
             _logger = logger;
         }
@@ -209,54 +212,71 @@ namespace ApiContabsv.Controllers
 
                     if (transmissionResult != null)
                     {
-                        string errorMessage = null;
-                        string errorDetails = null;
-                        string responseCode = null;
-
                         if (transmissionResult.Success)
                         {
-                            //  Documento procesado exitosamente
                             finalDocumentStatus = transmissionResult.Status ?? "PROCESADO";
+
+                            await _documentService.UpdateDocumentStatus(
+                                dteId, finalDocumentStatus, transmissionResult.ReceptionStamp,
+                                null, null, transmissionResult.RawResponse, transmissionResult.ResponseCode);
                         }
                         else if (transmissionResult.Status == "RECHAZADO")
                         {
-                            //  Documento rechazado por Hacienda (NO va a contingencia)
+                            // Rechazado definitivo — no va a contingencia
                             finalDocumentStatus = "RECHAZADO";
-                            errorMessage = transmissionResult.Error;
-                            errorDetails = transmissionResult.ErrorDetails;
-                            responseCode = transmissionResult.ResponseCode;
+
+                            await _documentService.UpdateDocumentStatus(
+                                dteId, finalDocumentStatus, null,
+                                transmissionResult.Error, transmissionResult.ErrorDetails,
+                                transmissionResult.RawResponse, transmissionResult.ResponseCode);
+                        }
+                        else if (_contingencyService.ShouldGoToContingency(transmissionResult))
+                        {
+                           
+                            finalDocumentStatus = "CONTINGENCIA";
+
+                            await _contingencyService.StoreInContingency(
+                                dteId: dteId,
+                                userId: user.Id,
+                                documentType: "03",          
+                                signedJWT: signedJWT,
+                                userNit: user.Nit,
+                                ambiente: request.Environment ?? "",
+                                version: 3,             
+                                failedResult: transmissionResult);
+                        }
+                        else
+                        {
+                            
+                            finalDocumentStatus = "ERROR_TRANSMISION";
+
+                            await _documentService.UpdateDocumentStatus(
+                                dteId, finalDocumentStatus, null,
+                                transmissionResult.Error, transmissionResult.ErrorDetails,
+                                transmissionResult.RawResponse, transmissionResult.ResponseCode);
+                        }
+                    }
+                    else
+                    {
+                        
+                        if (_contingencyService.ShouldGoToContingency(null))
+                        {
+                            finalDocumentStatus = "CONTINGENCIA";
+
+                            await _contingencyService.StoreInContingency(
+                                dteId, user.Id, "03", signedJWT,
+                                user.Nit, request.Environment ?? "00", 3);
                         }
                         else
                         {
                             finalDocumentStatus = "ERROR_TRANSMISION";
-                            errorMessage = transmissionResult.Error;
-                            errorDetails = transmissionResult.ErrorDetails;
 
+                            await _documentService.UpdateDocumentStatus(
+                                dteId, finalDocumentStatus, null,
+                                "Error interno: transmissionResult es null", null, null, null);
                         }
-
-                        // Actualizar estado en base de datos CON DETALLES DE ERROR
-                        await _documentService.UpdateDocumentStatus(
-                            dteId,
-                            finalDocumentStatus,
-                            transmissionResult.ReceptionStamp,
-                            errorMessage,
-                            errorDetails,
-                            transmissionResult.RawResponse,
-                            responseCode);
-
                     }
-                    else
-                    {
-                        finalDocumentStatus = "ERROR_TRANSMISION";
-                        await _documentService.UpdateDocumentStatus(
-                            dteId,
-                            finalDocumentStatus,
-                            null,
-                            "Error interno: transmissionResult es null",
-                            null,
-                            null,
-                            null);
-                    }
+
                 }
 
                 // 13. Respuesta exitosa
