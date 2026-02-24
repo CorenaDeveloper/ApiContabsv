@@ -56,6 +56,7 @@ namespace ApiContabsv.Services
                     DteId = request.DteId,
                     DocumentType = request.DocumentType,
                     Status = request.Status ?? "FIRMADO",
+                    Transmission = request.Transmission ?? "NORMAL",
                     JsonContent = request.JsonContent,
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
@@ -101,6 +102,12 @@ namespace ApiContabsv.Services
                 document.HaciendaResponse = haciendaResponse;
                 document.ResponseCode = responseCode;
 
+                // Si el status es CONTINGENCIA, marcar transmission como CONTINGENCIA
+                if (status == "CONTINGENCIA")
+                    document.Transmission = "CONTINGENCIA";
+                // Si se recibe sello → fue procesado exitosamente → marcar NORMAL
+                // (si vino de contingencia y fue retransmitido, el transmission ya quedó CONTINGENCIA,
+                //  lo dejamos así para mantener el historial)
                 if (!string.IsNullOrEmpty(receptionStamp) && !string.IsNullOrEmpty(document.JsonContent))
                 {
                     var jsonDoc = JsonSerializer.Deserialize<JsonElement>(document.JsonContent);
@@ -203,6 +210,7 @@ namespace ApiContabsv.Services
                     UserName = document.User?.CommercialName ?? "",
                     DocumentType = document.DocumentType,
                     Status = document.Status,
+                    Transmission = document.Transmission,
                     ControlNumber = details?.ControlNumber ?? "",
                     TotalAmount = details?.TotalAmount ?? 0,
                     JsonContent = document.JsonContent,
@@ -273,6 +281,7 @@ namespace ApiContabsv.Services
                         UserId = d.UserId,
                         DocumentType = d.DocumentType,
                         Status = d.Status,
+                        Transmission = d.Transmission,
                         JsonContent = d.JsonContent,
                         CreatedAt = d.CreatedAt,
                         UpdatedAt = d.UpdatedAt,

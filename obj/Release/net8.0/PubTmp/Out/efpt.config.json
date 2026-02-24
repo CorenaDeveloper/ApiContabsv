@@ -1,13 +1,13 @@
 ﻿{
    "CodeGenerationMode": 4,
-   "ContextClassName": "ContabilidadContext",
+   "ContextClassName": "dteContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
    "IncludeConnectionString": false,
    "MinimumProductVersion": "2.6.1186",
    "ModelNamespace": null,
    "OutputContextPath": null,
-   "OutputPath": "Models\/Contabilidad",
+   "OutputPath": "Models\/Dte",
    "PreserveCasingWithRegex": true,
    "ProjectRootNamespace": "ApiContabsv",
    "Schemas": null,
@@ -16,100 +16,64 @@
    "T4TemplatePath": null,
    "Tables": [
       {
-         "Name": "[dbo].[actividades_economicas]",
+         "Name": "[dbo].[addresses]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[cat_tipo_item]",
+         "Name": "[dbo].[branch_offices]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[ClaseDocumento]",
+         "Name": "[dbo].[contingency_document]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Clasificacion]",
+         "Name": "[dbo].[control_number_sequence]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[clientexClt]",
+         "Name": "[dbo].[domain_event]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Compras]",
+         "Name": "[dbo].[dte_balance_control]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[departamentos]",
+         "Name": "[dbo].[dte_balance_transaction]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[municipios]",
+         "Name": "[dbo].[dte_details]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Operaciones]",
+         "Name": "[dbo].[dte_document]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Proveedores]",
+         "Name": "[dbo].[failed_sequence_number]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Resolucion]",
+         "Name": "[dbo].[notification_users]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[Sector]",
+         "Name": "[dbo].[signer_assignments]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[TipoDocumento]",
+         "Name": "[dbo].[signers]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[TipoOperacionCG]",
+         "Name": "[dbo].[user_notifications]",
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[VentaConsumidor]",
+         "Name": "[dbo].[users]",
          "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[VentaContribuyentes]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[Ventas]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[VentasDetalle]",
-         "ObjectType": 0
-      },
-      {
-         "Name": "[dbo].[vw_ReporteProfit]",
-         "ObjectType": 3
-      },
-      {
-         "Name": "[dbo].[sp_AnularVentaSimple]",
-         "ObjectType": 1
-      },
-      {
-         "Name": "[dbo].[sp_CalcularCostoFIFO]",
-         "ObjectType": 1
-      },
-      {
-         "Name": "[dbo].[sp_ListarVentas]",
-         "ObjectType": 1
-      },
-      {
-         "Name": "[dbo].[sp_RegistrarVenta]",
-         "ObjectType": 1
-      },
-      {
-         "Name": "[dbo].[sp_RegistrarVentaSimple]",
-         "ObjectType": 1
       }
    ],
    "UiHint": null,

@@ -78,18 +78,29 @@ namespace ApiContabsv.Services
             if (ex is HttpRequestException || ex is TaskCanceledException || ex is TimeoutException)
                 return true;
 
-            // Códigos de error que indican problema de comunicación
             if (result != null)
             {
                 var code = (result.ResponseCode ?? "").ToUpper();
                 var error = (result.Error ?? "").ToUpper();
 
+                // ResponseCode explícito de comunicación
                 if (code == "HTTP_ERROR" || code == "INTERNAL_ERROR")
                     return true;
 
-                if (error.Contains("CONEXI") || error.Contains("CONNECTION") ||
-                    error.Contains("TIMEOUT") || error.Contains("DISPONIBLE") ||
-                    error.Contains("SERVICE UNAVAILABLE") || error.Contains("503") ||
+                // Errores HTTP que genera HaciendaService con el formato "Error HTTP {StatusCode}"
+                // 401 Unauthorized  → token expirado/inválido, el documento está bien → contingencia
+                // 500/502/503/504   → MH caído o sobrecargado → contingencia
+                if (error.Contains("ERROR HTTP"))
+                    return true;
+
+                // Palabras clave de problemas de comunicación
+                if (error.Contains("CONEXI") ||
+                    error.Contains("CONNECTION") ||
+                    error.Contains("TIMEOUT") ||
+                    error.Contains("DISPONIBLE") ||
+                    error.Contains("UNAUTHORIZED") ||
+                    error.Contains("SERVICE UNAVAILABLE") ||
+                    error.Contains("503") ||
                     error.Contains("504"))
                     return true;
             }

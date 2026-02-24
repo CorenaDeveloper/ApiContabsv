@@ -11,6 +11,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string ControlNumber { get; set; } = "";
         public decimal TotalAmount { get; set; }
         public string? Status { get; set; }
+        public string? Transmission { get; set; }
         public string? JsonContent { get; set; }
         public string? EstablishmentCode { get; set; }
         public string? PosCode { get; set; }
@@ -25,6 +26,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string UserName { get; set; } = "";
         public string DocumentType { get; set; } = "";
         public string Status { get; set; } = "";
+        public string? Transmission { get; set; }
         public string ControlNumber { get; set; } = "";
         public decimal TotalAmount { get; set; }
         public string? JsonContent { get; set; }

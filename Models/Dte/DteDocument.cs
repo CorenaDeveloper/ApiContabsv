@@ -35,5 +35,7 @@ public partial class DteDocument
 
     public string Ambiente { get; set; }
 
+    public string Transmission { get; set; }
+
     public virtual User User { get; set; }
 }
