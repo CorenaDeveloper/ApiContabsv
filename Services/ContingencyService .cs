@@ -512,17 +512,20 @@ namespace ApiContabsv.Services
                     ambiente = ambiente,
                     idEnvio = batchId,
                     version = version,
-                    nit = userNit,
-                    documento = signedDocs.ToArray()
+                    nitEmisor = userNit,
+                    documentos = signedDocs.ToArray()
                 };
 
                 var httpClient = _httpClientFactory.CreateClient();
                 httpClient.Timeout = TimeSpan.FromSeconds(45);
                 httpClient.DefaultRequestHeaders.Add("Authorization", haciendaToken);
 
+                var jsonBody = JsonSerializer.Serialize(batchRequest);
+                _logger.LogInformation("Lote request → URL={Url} Body={Body}", loteUrl, jsonBody);
+
                 var response = await httpClient.PostAsync(
                     loteUrl,
-                    new StringContent(JsonSerializer.Serialize(batchRequest), Encoding.UTF8, "application/json"));
+                    new StringContent(jsonBody, Encoding.UTF8, "application/json"));
 
                 var responseBody = await response.Content.ReadAsStringAsync();
                 _logger.LogInformation("Lote enviado → {Status}: {Body}", response.StatusCode, responseBody);
@@ -531,8 +534,8 @@ namespace ApiContabsv.Services
 
                 var responseJson = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
-                // MH puede responder con diferentes nombres de campo
-                foreach (var field in new[] { "codigoMensaje", "batchCode", "codigo", "codigoBatch" })
+                // MH responde con codigoLote (campo confirmado en modelo Go)
+                foreach (var field in new[] { "codigoLote", "codigoMensaje", "batchCode", "codigo" })
                 {
                     if (responseJson.TryGetProperty(field, out var val))
                         return val.GetString();
@@ -582,7 +585,7 @@ namespace ApiContabsv.Services
                     var json = JsonSerializer.Deserialize<JsonElement>(body);
 
                     // PROCESADOS
-                    if (json.TryGetProperty("listadoProcesados", out var procesados) &&
+                    if (json.TryGetProperty("procesados", out var procesados) &&
                         procesados.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var item in procesados.EnumerateArray())
@@ -605,7 +608,7 @@ namespace ApiContabsv.Services
                     }
 
                     // RECHAZADOS
-                    if (json.TryGetProperty("listadoRechazados", out var rechazados) &&
+                    if (json.TryGetProperty("rechazados", out var rechazados) &&
                         rechazados.ValueKind == JsonValueKind.Array)
                     {
                         foreach (var item in rechazados.EnumerateArray())
@@ -628,8 +631,8 @@ namespace ApiContabsv.Services
                     }
 
                     bool hayResultados =
-                        (json.TryGetProperty("listadoProcesados", out var lp) && lp.GetArrayLength() > 0) ||
-                        (json.TryGetProperty("listadoRechazados", out var lr) && lr.GetArrayLength() > 0);
+                        (json.TryGetProperty("procesados", out var lp) && lp.GetArrayLength() > 0) ||
+                        (json.TryGetProperty("rechazados", out var lr) && lr.GetArrayLength() > 0);
 
                     if (hayResultados) return;
                 }
