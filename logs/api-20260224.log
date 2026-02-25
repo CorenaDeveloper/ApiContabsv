@@ -1,0 +1,23 @@
+2026-02-24 13:51:18.194 -06:00 [INF] ✅ Aplicación configurada correctamente
+2026-02-24 13:51:18.272 -06:00 [INF] ContingencyRetransmissionJob iniciado. Intervalo: 30 minutos.
+2026-02-24 13:51:18.572 -06:00 [INF] Now listening on: https://localhost:7189
+2026-02-24 13:51:18.575 -06:00 [INF] Now listening on: http://localhost:5241
+2026-02-24 13:51:18.667 -06:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-24 13:51:18.668 -06:00 [INF] Hosting environment: Development
+2026-02-24 13:51:18.669 -06:00 [INF] Content root path: C:\Users\programador04\Documents\GitHub\ApiContabsv
+2026-02-24 13:51:19.865 -06:00 [INF] Request starting HTTP/2 GET https://localhost:7189/swagger - null null
+2026-02-24 13:51:20.019 -06:00 [INF] HTTP GET /swagger responded 401 in 44.4645 ms
+2026-02-24 13:51:20.026 -06:00 [INF] Request finished HTTP/2 GET https://localhost:7189/swagger - 401 null null 168.7605ms
+2026-02-24 13:51:20.046 -06:00 [INF] Request starting HTTP/2 GET https://localhost:7189/favicon.ico - null null
+2026-02-24 13:51:20.057 -06:00 [INF] HTTP GET /favicon.ico responded 401 in 6.2756 ms
+2026-02-24 13:51:20.060 -06:00 [INF] Request finished HTTP/2 GET https://localhost:7189/favicon.ico - 401 null null 14.1617ms
+2026-02-24 14:26:42.026 -06:00 [INF] ✅ Aplicación configurada correctamente
+2026-02-24 14:26:42.066 -06:00 [INF] ContingencyRetransmissionJob iniciado. Intervalo: 30 minutos.
+2026-02-24 14:26:42.232 -06:00 [INF] Now listening on: https://localhost:7189
+2026-02-24 14:26:42.234 -06:00 [INF] Now listening on: http://localhost:5241
+2026-02-24 14:26:42.297 -06:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-02-24 14:26:42.298 -06:00 [INF] Hosting environment: Development
+2026-02-24 14:26:42.299 -06:00 [INF] Content root path: C:\Users\programador04\Documents\GitHub\ApiContabsv
+2026-02-24 14:26:43.438 -06:00 [INF] Request starting HTTP/2 GET https://localhost:7189/swagger - null null
+2026-02-24 14:26:43.556 -06:00 [INF] HTTP GET /swagger responded 401 in 36.4790 ms
+2026-02-24 14:26:43.564 -06:00 [INF] Request finished HTTP/2 GET https://localhost:7189/swagger - 401 null null 131.9065ms
