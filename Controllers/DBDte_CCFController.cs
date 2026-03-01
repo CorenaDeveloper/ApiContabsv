@@ -41,69 +41,69 @@ namespace ApiContabsv.Controllers
         /// <summary>
         /// CREAR COMPROBANTE DE CRÉDITO FISCAL (CCF)
         /// Ejemplo de json para el body:
-        ////{
-        ////    "clientId": 6,
-        ////  "userId": 5,
-        ////  "items": [
-        ////    {
-        ////        "type": 1,
-        ////      "description": "Venta gravada",
-        ////      "quantity": 1,
-        ////      "unit_measure": 59,
-        ////      "unit_price": 2000.00,
-        ////      "taxed_sale": 2000.00,
-        ////      "exempt_sale": 0,
-        ////      "non_subject_sale": 0,
-        ////      "taxes": [
-        ////        "20"
-        ////      ]
-        ////    }
-        ////  ],
-        ////  "receiver": {
-        ////        "nrc": "3625871",
-        ////    "nit": "06140912941505",
-        ////    "name": "CLIENTE DE PRUEBA",
-        ////    "commercial_name": "EJEMPLO S.A de S.V",
-        ////    "activity_code": "62010",
-        ////    "activity_description": "Programacion informatica",
-        ////    "address": {
-        ////            "department": "06",
-        ////      "municipality": "22",
-        ////      "complement": "Dirección de Prueba 1, N° 1234"
-        ////    },
-        ////    "phone": "21212828",
-        ////    "email": "cliente@gmail.com"
-        ////  },
-        ////  "summary": {
-        ////    "operation_condition": 1,
-        ////    "total_taxed": 2000.00,
-        ////    "total_exempt": 0,
-        ////    "total_non_taxed": 0,
-        ////    "total_non_subject": 0,
-        ////    "sub_total_sales": 2000.00,
-        ////    "sub_total": 2000.00,
-        ////    "iva_perception": 0,
-        ////    "iva_retention": 0,
-        ////    "income_retention": 0,
-        ////    "total_operation": 2260.00,
-        ////    "total_to_pay": 2260.00,
-        ////    "taxes": [
-        ////      {
-        ////        "code": "20",
-        ////        "description": "IVA 13%",
-        ////        "value": 260.00
-        ////      }
-        ////    ],
-        ////    "payment_types": [
-        ////      {
-        ////        "code": "01",
-        ////        "amount": 2260.00
-        ////      }
-        ////    ]
-        ////  },
-        ////  "environment": "00",
-        ////  "sendToHacienda": true
-        ////}
+    ////    {
+    ////        "clientId": 6,
+    ////      "userId": 5,
+    ////      "items": [
+    ////        {
+    ////            "type": 1,
+    ////          "description": "Venta gravada",
+    ////          "quantity": 1,
+    ////          "unit_measure": 59,
+    ////          "unit_price": 2000.00,
+    ////          "taxed_sale": 2000.00,
+    ////          "exempt_sale": 0,
+    ////          "non_subject_sale": 0,
+    ////          "taxes": [
+    ////            "20"
+    ////          ]
+    ////}
+    ////      ],
+    ////      "receiver": {
+    ////            "nrc": "3625871",
+    ////        "nit": "06140912941505",
+    ////        "name": "CLIENTE DE PRUEBA",
+    ////        "commercial_name": "EJEMPLO S.A de S.V",
+    ////        "activity_code": "62010",
+    ////        "activity_description": "Programacion informatica",
+    ////        "address": {
+    ////                "department": "06",
+    ////          "municipality": "22",
+    ////          "complement": "Dirección de Prueba 1, N° 1234"
+    ////        },
+    ////        "phone": "21212828",
+    ////        "email": "cliente@gmail.com"
+    ////      },
+    ////      "summary": {
+    ////"operation_condition": 1,
+    ////        "total_taxed": 2000.00,
+    ////        "total_exempt": 0,
+    ////        "total_non_taxed": 0,
+    ////        "total_non_subject": 0,
+    ////        "sub_total_sales": 2000.00,
+    ////        "sub_total": 2000.00,
+    ////        "iva_perception": 0,
+    ////        "iva_retention": 0,
+    ////        "income_retention": 0,
+    ////        "total_operation": 2260.00,
+    ////        "total_to_pay": 2260.00,
+    ////        "taxes": [
+    ////          {
+    ////    "code": "20",
+    ////            "description": "IVA 13%",
+    ////            "value": 260.00
+    ////          }
+    ////        ],
+    ////        "payment_types": [
+    ////          {
+    ////    "code": "01",
+    ////            "amount": 2260.00
+    ////          }
+    ////        ]
+    ////      },
+    ////      "environment": "00",
+    ////      "sendToHacienda": true
+    ////    }
         /// </summary>
         [HttpPost]
         public async Task<ActionResult> CreateCCF([FromBody] CreateCCFRequestDTO request)

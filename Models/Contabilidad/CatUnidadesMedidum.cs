@@ -5,13 +5,9 @@ using System.Collections.Generic;
 
 namespace ApiContabsv.Models.Contabilidad;
 
-public partial class Municipio
+public partial class CatUnidadesMedidum
 {
-    public int Id { get; set; }
+    public int Codigo { get; set; }
 
-    public string Codigo { get; set; }
-
-    public string Nombre { get; set; }
-
-    public string Codigodep { get; set; }
+    public string Descripcion { get; set; }
 }

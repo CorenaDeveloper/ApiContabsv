@@ -49,6 +49,10 @@ public partial class InvProducto
 
     public int TipoItemId { get; set; }
 
+    public int? FactorCaja { get; set; }
+
+    public int? CodigoUnidadMh { get; set; }
+
     public virtual InvCategoria IdCategoriaNavigation { get; set; }
 
     public virtual InvMarca IdMarcaNavigation { get; set; }

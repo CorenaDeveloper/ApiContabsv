@@ -236,11 +236,17 @@ try
     // ============================================
     app.UseCors("AllowAll");
     app.UseHttpsRedirection();
-    app.UseAuthorization();
 
-    // Middleware de autenticación con API Key
     app.Use(async (context, next) =>
     {
+        // Excluir webhook, swagger y health checks
+        if (context.Request.Path.StartsWithSegments("/DBContabsv_Wompi/Webhook") ||
+            context.Request.Path.StartsWithSegments("/swagger"))
+        {
+            await next();
+            return;
+        }
+
         var config = context.RequestServices.GetRequiredService<IConfiguration>();
         var apiKey = config.GetValue<string>("AuthSettings:ApiKey");
 
@@ -253,10 +259,10 @@ try
 
         await next();
     });
+    app.UseAuthorization();
 
     app.MapControllers();
 
-    Log.Information("✅ Aplicación configurada correctamente");
 
     app.Run();
 }

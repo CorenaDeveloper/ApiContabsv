@@ -21,12 +21,6 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public bool IsMaster { get; set; } = false;
 
         /// <summary>
-        /// ID del usuario padre (solo para sub-clientes)
-        /// </summary>
-        /// <example>5</example>
-        public int? ParentUserId { get; set; }
-
-        /// <summary>
         /// Número de Identificación Tributaria (NIT) - Único y requerido
         /// Formato: 14 dígitos + DV (verificador)
         /// </summary>
@@ -53,6 +47,14 @@ namespace ApiContabsv.DTO.DB_DteDTO
         [Required(ErrorMessage = "La contraseña del certificado es obligatoria")]
         [StringLength(255, MinimumLength = 6, ErrorMessage = "La contraseña debe tener entre 6 y 255 caracteres")]
         public string PasswordPri { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Contraseña del la api de generacion de Dte
+        /// Requerido para firmar documentos electrónicos
+        /// </summary>
+        /// <example>MiPassword123!</example>
+        [Required(ErrorMessage = "La contraseña del certificado es obligatoria")]
+        public string jwtSecret { get; set; } = string.Empty;
 
         /// <summary>
         /// Nombre comercial de la empresa
@@ -121,7 +123,8 @@ namespace ApiContabsv.DTO.DB_DteDTO
         /// </summary>
         /// <example>14</example>
         [Range(1, 365, ErrorMessage = "La duración del token debe estar entre 1 y 365 días")]
-        public int TokenLifetime { get; set; } = 14;
+        public int TokenLifetime { get; set; } = 14; 
+        public string Ambiente { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -133,7 +136,6 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public int Id { get; set; }
         public int? ClienteId { get; set; }
         public bool IsMaster { get; set; }
-        public int? ParentUserId { get; set; }
         public string Nit { get; set; } = string.Empty;
         public string Nrc { get; set; } = string.Empty;
         public bool Status { get; set; }
@@ -147,7 +149,7 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public bool YearInDte { get; set; }
         public int TokenLifetime { get; set; }
         public DateTime? CreatedAt { get; set; }
-
+        public string? Ambiente { get; set; }
         /// <summary>
         /// Mensaje de éxito
         /// </summary>

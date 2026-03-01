@@ -49,29 +49,7 @@ namespace ApiContabsv.Controllers
 
                 if (result.Success)
                 {
-
-                    var pago = new HistorialPago
-                    {
-                        IdSuscripcion = request.IdSuscripcion,
-                        IdCliente = suscripcion.IdCliente,
-                        FechaPago = DateTime.Now,
-                        Monto = monto,
-                        MetodoPago = "wompi",
-                        EstadoPago = "pendiente",
-                        PaypalPaymentId = result.Referencia,
-                        DetallePago = JsonSerializer.Serialize(new
-                        {
-                            detalle = suscripcion.SuscripcionDetalles
-                                .Where(d => d.Activo == true)
-                                .Select(d => new { concepto = d.Concepto, monto = d.PrecioUnitario }),
-                            total = monto
-                        }),
-                        FechaCreacion = DateTime.Now
-                    };
-
-                    _context.HistorialPagos.Add(pago);
-                    await _context.SaveChangesAsync();
-
+                    // ✅ NO guardar pago aquí - el webhook lo hace cuando se confirme
                     return Ok(new
                     {
                         success = true,

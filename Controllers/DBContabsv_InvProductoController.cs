@@ -53,6 +53,8 @@ namespace ApiContabsv.Controllers
                         c.UnidadMedida,
                         c.Imagen,
                         c.Sku,
+                        c.FactorCaja,
+                        c.CodigoUnidadMh,
                         nombreMarca = _contabsvContext.InvMarcas
                             .Where(m => m.IdMarca == c.IdMarca)
                             .Select(m => m.Nombre)
@@ -117,6 +119,8 @@ namespace ApiContabsv.Controllers
                     c.UnidadMedida,
                     c.Imagen,
                     c.Sku,
+                    c.FactorCaja,
+                    c.CodigoUnidadMh,
                     nombreMarca = _contabsvContext.InvMarcas
                             .Where(m => m.IdMarca == c.IdMarca)
                             .Select(m => m.Nombre)
@@ -129,7 +133,8 @@ namespace ApiContabsv.Controllers
                             .Where(t => t.IdTipo == c.IdTipo)
                             .Select(t => t.Nombre)
                             .FirstOrDefault(),
-                     c.TipoItemId
+                     c.TipoItemId,
+                    nombreTipoItem = c.TipoItemId == 2 ? "Servicio" : c.TipoItemId == 1 ? "Bienes" : c.TipoItemId == 3 ? "Ambos (Servicio/Producto)" : "N/A"
                 };
 
                 return Ok(b);
@@ -175,7 +180,9 @@ namespace ApiContabsv.Controllers
                     UnidadMedida = c.UnidadMedida,
                     Imagen = c.Imagen,
                     Sku = c.Sku,
-                    TipoItemId = c.TipoItemId
+                    TipoItemId = c.TipoItemId,
+                    FactorCaja = c.FactorCaja,
+                    CodigoUnidadMh = c.CodigoUnidadMh   
                 };
 
                 _contabsvContext.Add(a);
@@ -225,6 +232,8 @@ namespace ApiContabsv.Controllers
                 a.Imagen = c.Imagen;
                 a.Sku = c.Sku;
                 a.TipoItemId = c.TipoItemId;
+                a.FactorCaja = c.FactorCaja;
+                a.CodigoUnidadMh = c.CodigoUnidadMh;
 
                 await _contabsvContext.SaveChangesAsync();
                 return NoContent();

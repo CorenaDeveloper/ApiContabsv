@@ -23,6 +23,10 @@ public partial class ContabsvContext : DbContext
 
     public virtual DbSet<InvMovimiento> InvMovimientos { get; set; }
 
+    public virtual DbSet<InvOrdenesCompra> InvOrdenesCompras { get; set; }
+
+    public virtual DbSet<InvOrdenesCompraDetalle> InvOrdenesCompraDetalles { get; set; }
+
     public virtual DbSet<InvProducto> InvProductos { get; set; }
 
     public virtual DbSet<InvStock> InvStocks { get; set; }
@@ -62,7 +66,8 @@ public partial class ContabsvContext : DbContext
                 .HasColumnType("text")
                 .HasColumnName("api_secret");
             entity.Property(e => e.Celular)
-                .HasMaxLength(13)
+                .HasMaxLength(20)
+                .IsUnicode(false)
                 .HasColumnName("celular");
             entity.Property(e => e.CodSector)
                 .HasMaxLength(2)
@@ -88,7 +93,6 @@ public partial class ContabsvContext : DbContext
                 .HasDefaultValue("activo")
                 .HasColumnName("estadoCliente");
             entity.Property(e => e.Facebook)
-                .HasMaxLength(120)
                 .IsUnicode(false)
                 .HasColumnName("facebook");
             entity.Property(e => e.FechaRegistro)
@@ -103,7 +107,6 @@ public partial class ContabsvContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("imagen");
             entity.Property(e => e.Instagram)
-                .HasMaxLength(120)
                 .IsUnicode(false)
                 .HasColumnName("instagram");
             entity.Property(e => e.IsDeclarante).HasColumnName("isDeclarante");
@@ -141,7 +144,8 @@ public partial class ContabsvContext : DbContext
                 .HasMaxLength(120)
                 .HasColumnName("representanteLegal");
             entity.Property(e => e.TelefonoCliente)
-                .HasMaxLength(13)
+                .HasMaxLength(20)
+                .IsUnicode(false)
                 .HasColumnName("telefonoCliente");
             entity.Property(e => e.TipoContribuyente)
                 .HasMaxLength(50)
@@ -328,6 +332,78 @@ public partial class ContabsvContext : DbContext
                 .HasConstraintName("FK__inv_movim__idPro__06CD04F7");
         });
 
+        modelBuilder.Entity<InvOrdenesCompra>(entity =>
+        {
+            entity.HasKey(e => e.IdCompra).HasName("PK__inv_orde__48B99DB753F83ABF");
+
+            entity.ToTable("inv_ordenes_compra");
+
+            entity.Property(e => e.IdCompra).HasColumnName("idCompra");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(20)
+                .IsUnicode(false)
+                .HasDefaultValue("Abierta")
+                .HasColumnName("estado");
+            entity.Property(e => e.FechaCierre)
+                .HasColumnType("datetime")
+                .HasColumnName("fechaCierre");
+            entity.Property(e => e.FechaOrden)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("fechaOrden");
+            entity.Property(e => e.IdCliente).HasColumnName("idCliente");
+            entity.Property(e => e.IdProveedor).HasColumnName("idProveedor");
+            entity.Property(e => e.NumeroOrden)
+                .HasMaxLength(50)
+                .IsUnicode(false)
+                .HasColumnName("numeroOrden");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(500)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.Responsable)
+                .HasMaxLength(150)
+                .IsUnicode(false)
+                .HasColumnName("responsable");
+        });
+
+        modelBuilder.Entity<InvOrdenesCompraDetalle>(entity =>
+        {
+            entity.HasKey(e => e.IdDetalle).HasName("PK__inv_orde__49CAE2FB6EDB1ABF");
+
+            entity.ToTable("inv_ordenes_compra_detalle");
+
+            entity.Property(e => e.IdDetalle).HasColumnName("idDetalle");
+            entity.Property(e => e.CantidadOrdenada)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("cantidadOrdenada");
+            entity.Property(e => e.CantidadRecibida)
+                .HasDefaultValue(0m)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("cantidadRecibida");
+            entity.Property(e => e.CostoUnitario)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("costoUnitario");
+            entity.Property(e => e.IdCompra).HasColumnName("idCompra");
+            entity.Property(e => e.IdProducto).HasColumnName("idProducto");
+            entity.Property(e => e.Lote)
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnName("lote");
+            entity.Property(e => e.Observaciones)
+                .HasMaxLength(300)
+                .IsUnicode(false)
+                .HasColumnName("observaciones");
+            entity.Property(e => e.PrecioVenta)
+                .HasColumnType("decimal(10, 2)")
+                .HasColumnName("precioVenta");
+
+            entity.HasOne(d => d.IdCompraNavigation).WithMany(p => p.InvOrdenesCompraDetalles)
+                .HasForeignKey(d => d.IdCompra)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__inv_orden__idCom__44CA3770");
+        });
+
         modelBuilder.Entity<InvProducto>(entity =>
         {
             entity.HasKey(e => e.IdProducto).HasName("PK__inv_prod__07F4A132C60345B0");
@@ -338,12 +414,18 @@ public partial class ContabsvContext : DbContext
             entity.Property(e => e.CodigoBarra)
                 .HasMaxLength(100)
                 .HasColumnName("codigoBarra");
+            entity.Property(e => e.CodigoUnidadMh)
+                .HasDefaultValue(59)
+                .HasColumnName("codigoUnidadMH");
             entity.Property(e => e.Descripcion)
                 .HasMaxLength(255)
                 .HasColumnName("descripcion");
             entity.Property(e => e.Estado)
                 .HasDefaultValue(true)
                 .HasColumnName("estado");
+            entity.Property(e => e.FactorCaja)
+                .HasDefaultValue(1)
+                .HasColumnName("factorCaja");
             entity.Property(e => e.FechaRegistro)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")

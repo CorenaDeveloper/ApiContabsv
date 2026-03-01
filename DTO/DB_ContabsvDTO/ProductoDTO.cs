@@ -26,6 +26,8 @@
         public string nombreCategoria { get; set; } = "";
         public string nombreTipo { get; set; } = "";
         public int TipoItemId { get; set; } = 0;
+        public int FactorCaja { get; set; } = 1;
+        public int CodigoUnidadMh { get; set; } = 59;
 
     }
 

@@ -17,6 +17,8 @@ public partial class ContabilidadContext : DbContext
 
     public virtual DbSet<CatTipoItem> CatTipoItems { get; set; }
 
+    public virtual DbSet<CatUnidadesMedidum> CatUnidadesMedida { get; set; }
+
     public virtual DbSet<ClaseDocumento> ClaseDocumentos { get; set; }
 
     public virtual DbSet<Clasificacion> Clasificacions { get; set; }
@@ -96,6 +98,22 @@ public partial class ContabilidadContext : DbContext
             entity.Property(e => e.Descripcion)
                 .IsRequired()
                 .HasMaxLength(150)
+                .HasColumnName("descripcion");
+        });
+
+        modelBuilder.Entity<CatUnidadesMedidum>(entity =>
+        {
+            entity.HasKey(e => e.Codigo).HasName("PK__cat_unid__40F9A20771CD9E19");
+
+            entity.ToTable("cat_unidades_medida");
+
+            entity.Property(e => e.Codigo)
+                .ValueGeneratedNever()
+                .HasColumnName("codigo");
+            entity.Property(e => e.Descripcion)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false)
                 .HasColumnName("descripcion");
         });
 
@@ -327,6 +345,10 @@ public partial class ContabilidadContext : DbContext
                 .HasMaxLength(2)
                 .IsUnicode(false)
                 .HasColumnName("codigo");
+            entity.Property(e => e.Codigodep)
+                .HasMaxLength(2)
+                .IsUnicode(false)
+                .HasColumnName("codigodep");
             entity.Property(e => e.Nombre)
                 .IsRequired()
                 .HasMaxLength(100)

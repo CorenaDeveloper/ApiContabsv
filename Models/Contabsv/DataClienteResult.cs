@@ -24,9 +24,9 @@ namespace ApiContabsv.Models.Contabsv
         public string representanteLegal { get; set; }
         [StringLength(10)]
         public string duiRepresentanteLegal { get; set; }
-        [StringLength(13)]
+        [StringLength(20)]
         public string telefonoCliente { get; set; }
-        [StringLength(13)]
+        [StringLength(20)]
         public string celular { get; set; }
         [StringLength(25)]
         public string nrc { get; set; }

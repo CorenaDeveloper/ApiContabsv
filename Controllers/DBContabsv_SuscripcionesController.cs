@@ -15,14 +15,10 @@ namespace ApiContabsv.Controllers
             _context = context;
         }
 
-
         // =============================================
         // SUSCRIPCIONES
         // =============================================
 
-        /// <summary>
-        /// Obtener suscripción con detalle completo por idCliente
-        /// </summary>
         [HttpGet("Suscripciones")]
         public async Task<ActionResult> GetSuscripciones([FromQuery] int? idCliente)
         {
@@ -31,9 +27,7 @@ namespace ApiContabsv.Controllers
                 var query = _context.Suscripciones.AsQueryable();
 
                 if (idCliente.HasValue)
-                {
                     query = query.Where(s => s.IdCliente == idCliente);
-                }
 
                 var lista = await query
                     .Select(s => new
@@ -84,9 +78,6 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Obtener suscripción por id
-        /// </summary>
         [HttpGet("Suscripciones/{id}")]
         public async Task<ActionResult> GetSuscripcion(int id)
         {
@@ -126,9 +117,7 @@ namespace ApiContabsv.Controllers
                     .FirstOrDefaultAsync();
 
                 if (suscripcion == null)
-                {
                     return NotFound("Suscripción no encontrada.");
-                }
 
                 return Ok(suscripcion);
             }
@@ -138,9 +127,6 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Crear suscripción
-        /// </summary>
         [HttpPost("Suscripciones")]
         public async Task<ActionResult> CreateSuscripcion(Suscripcione suscripcion)
         {
@@ -158,24 +144,17 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Actualizar suscripción (estado, paypal, etc)
-        /// </summary>
         [HttpPut("Suscripciones")]
         public async Task<IActionResult> UpdateSuscripcion(Suscripcione s)
         {
             if (s.IdSuscripcion == 0)
-            {
                 return BadRequest("El ID de la suscripción es inválido.");
-            }
 
             try
             {
                 var existing = await _context.Suscripciones.FindAsync(s.IdSuscripcion);
                 if (existing == null)
-                {
                     return NotFound("Suscripción no encontrada.");
-                }
 
                 existing.EstadoSuscripcion = s.EstadoSuscripcion;
                 existing.PaypalSubscriptionId = s.PaypalSubscriptionId;
@@ -194,9 +173,6 @@ namespace ApiContabsv.Controllers
         // SUSCRIPCION DETALLE
         // =============================================
 
-        /// <summary>
-        /// Obtener detalle por idSuscripcion
-        /// </summary>
         [HttpGet("SuscripcionDetalle")]
         public async Task<ActionResult> GetSuscripcionDetalle([FromQuery] int idSuscripcion)
         {
@@ -226,9 +202,6 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Agregar item al detalle de suscripción
-        /// </summary>
         [HttpPost("SuscripcionDetalle")]
         public async Task<ActionResult> CreateDetalle(SuscripcionDetalle detalle)
         {
@@ -246,24 +219,17 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Actualizar item del detalle
-        /// </summary>
         [HttpPut("SuscripcionDetalle")]
         public async Task<IActionResult> UpdateDetalle(SuscripcionDetalle d)
         {
             if (d.IdDetalle == 0)
-            {
                 return BadRequest("El ID del detalle es inválido.");
-            }
 
             try
             {
                 var existing = await _context.SuscripcionDetalles.FindAsync(d.IdDetalle);
                 if (existing == null)
-                {
                     return NotFound("Detalle no encontrado.");
-                }
 
                 existing.Concepto = d.Concepto;
                 existing.PrecioUnitario = d.PrecioUnitario;
@@ -281,9 +247,6 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Eliminar item del detalle
-        /// </summary>
         [HttpDelete("SuscripcionDetalle/{id}")]
         public async Task<IActionResult> DeleteDetalle(int id)
         {
@@ -291,9 +254,7 @@ namespace ApiContabsv.Controllers
             {
                 var detalle = await _context.SuscripcionDetalles.FindAsync(id);
                 if (detalle == null)
-                {
                     return NotFound("Detalle no encontrado.");
-                }
 
                 _context.SuscripcionDetalles.Remove(detalle);
                 await _context.SaveChangesAsync();
@@ -310,9 +271,6 @@ namespace ApiContabsv.Controllers
         // HISTORIAL DE PAGOS
         // =============================================
 
-        /// <summary>
-        /// Obtener historial de pagos por idCliente o idSuscripcion
-        /// </summary>
         [HttpGet("HistorialPagos")]
         public async Task<ActionResult> GetHistorialPagos([FromQuery] int? idCliente, [FromQuery] int? idSuscripcion)
         {
@@ -321,14 +279,10 @@ namespace ApiContabsv.Controllers
                 var query = _context.HistorialPagos.AsQueryable();
 
                 if (idCliente.HasValue)
-                {
                     query = query.Where(p => p.IdCliente == idCliente);
-                }
 
                 if (idSuscripcion.HasValue)
-                {
                     query = query.Where(p => p.IdSuscripcion == idSuscripcion);
-                }
 
                 var lista = await query
                     .OrderByDescending(p => p.FechaPago)
@@ -360,40 +314,61 @@ namespace ApiContabsv.Controllers
         }
 
         /// <summary>
-        /// Registrar pago - genera el JSON del detalle automáticamente
+        /// Registrar pago - genera el JSON del detalle y renueva fechas si es completado
         /// </summary>
         [HttpPost("HistorialPagos")]
         public async Task<ActionResult> CreatePago(HistorialPago pago)
         {
             try
             {
-                // Si no viene detallePago, lo generamos del detalle activo de la suscripción
+                // Cargar detalles activos con tracking para poder modificarlos
+                var detallesActivos = await _context.SuscripcionDetalles
+                    .Where(d => d.IdSuscripcion == pago.IdSuscripcion && d.Activo == true)
+                    .ToListAsync();
+
+                // Generar JSON del detalle si no viene
                 if (string.IsNullOrEmpty(pago.DetallePago))
                 {
-                    var detalles = await _context.SuscripcionDetalles
-                        .Where(d => d.IdSuscripcion == pago.IdSuscripcion && d.Activo == true)
-                        .Select(d => new { d.Concepto, monto = d.PrecioUnitario })
-                        .ToListAsync();
-
-                    var total = detalles.Sum(d => d.monto);
+                    var total = detallesActivos.Sum(d => d.PrecioUnitario);
 
                     pago.DetallePago = System.Text.Json.JsonSerializer.Serialize(new
                     {
-                        detalle = detalles,
+                        detalle = detallesActivos.Select(d => new { d.Concepto, monto = d.PrecioUnitario }),
                         total = total
                     });
 
-                    // Si no viene monto, lo calculamos
                     if (pago.Monto == 0)
-                    {
                         pago.Monto = total;
-                    }
                 }
 
                 pago.FechaCreacion = DateTime.Now;
                 _context.HistorialPagos.Add(pago);
-                await _context.SaveChangesAsync();
 
+                // Renovar fechas de vencimiento solo si el pago es completado
+                if (pago.EstadoPago == "completado")
+                {
+                    var suscripcion = await _context.Suscripciones.FindAsync(pago.IdSuscripcion);
+                    if (suscripcion != null)
+                        suscripcion.FechaModificacion = DateTime.Now;
+
+                    foreach (var detalle in detallesActivos)
+                    {
+                        switch (detalle.TipoCobro)
+                        {
+                            case "mensual":
+                                detalle.FechaInicio = DateTime.Now;
+                                detalle.FechaVencimiento = DateTime.Now.AddMonths(1);
+                                break;
+                            case "anual":
+                                detalle.FechaInicio = DateTime.Now;
+                                detalle.FechaVencimiento = DateTime.Now.AddYears(1);
+                                break;
+                                // "unico" no se renueva
+                        }
+                    }
+                }
+
+                await _context.SaveChangesAsync();
                 return Ok(pago);
             }
             catch (Exception ex)
@@ -402,24 +377,17 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        /// <summary>
-        /// Actualizar estado del pago (completado, fallido, reembolsado)
-        /// </summary>
         [HttpPut("HistorialPagos")]
         public async Task<IActionResult> UpdatePago(HistorialPago p)
         {
             if (p.IdPago == 0)
-            {
                 return BadRequest("El ID del pago es inválido.");
-            }
 
             try
             {
                 var existing = await _context.HistorialPagos.FindAsync(p.IdPago);
                 if (existing == null)
-                {
                     return NotFound("Pago no encontrado.");
-                }
 
                 existing.EstadoPago = p.EstadoPago;
                 existing.MetodoPago = p.MetodoPago;
@@ -438,9 +406,6 @@ namespace ApiContabsv.Controllers
         // RESUMEN DE COBROS PENDIENTES
         // =============================================
 
-        /// <summary>
-        /// Obtener resumen de cobros - todas las suscripciones activas con su total
-        /// </summary>
         [HttpGet("ResumenCobros")]
         public async Task<ActionResult> GetResumenCobros()
         {

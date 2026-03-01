@@ -217,10 +217,7 @@ namespace ApiContabsv.Controllers
                 if (signer == null)
                     return NotFound("Firmador no encontrado");
 
-                // Soft delete - solo desactivar
-                signer.IsActive = false;
-                signer.UpdatedAt = DateTime.UtcNow;
-
+                _context.Signers.Remove(signer);
                 await _context.SaveChangesAsync();
                 return NoContent();
             }
@@ -445,6 +442,28 @@ namespace ApiContabsv.Controllers
         }
 
         /// <summary>
+        /// ELIMINA ASIGNACION DE FIRMADOR
+        /// </summary>
+        [HttpDelete("assignments/{id}")]   
+        public async Task<IActionResult> DeleteSignerAssignment(int id)
+        {
+            try
+            {
+                var signer = await _context.SignerAssignments.FindAsync(id);
+                if (signer == null)
+                    return NotFound("Firmador no encontrado");
+
+                _context.SignerAssignments.Remove(signer);
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// LISTAR ASIGNACIONES DE UN USUARIO
         /// </summary>
         [HttpGet("assignments/user/{userId}")]
@@ -549,7 +568,48 @@ namespace ApiContabsv.Controllers
             return healthCheck;
         }
 
+        /// <summary>
+        /// SUBIR CERTIFICADO - guarda o reemplaza C:\CERTIFICADOS\{nit}.crt
+        /// </summary>
+        [HttpPost("certificado/{nit}")]
+        public async Task<IActionResult> UploadCertificado(string nit, IFormFile archivo)
+        {
+            try
+            {
+                if (archivo == null || archivo.Length == 0)
+                    return BadRequest("No se recibió ningún archivo.");
 
+                // Sanitizar NIT — solo dígitos
+                var nitLimpio = System.Text.RegularExpressions.Regex.Replace(nit, @"[^\d]", "");
+                if (string.IsNullOrEmpty(nitLimpio))
+                    return BadRequest("NIT inválido.");
+
+                var carpeta = @"C:\CERTIFICADOS";
+                var rutaArchivo = Path.Combine(carpeta, $"{nitLimpio}.crt");
+
+                // Crear carpeta si no existe
+                if (!Directory.Exists(carpeta))
+                    Directory.CreateDirectory(carpeta);
+
+                // Guardar — si existe lo reemplaza automáticamente
+                using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+                {
+                    await archivo.CopyToAsync(stream);
+                }
+
+                return Ok(new
+                {
+                    message = "Certificado guardado correctamente.",
+                    ruta = rutaArchivo,
+                    nit = nitLimpio,
+                    tamaño = archivo.Length
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
         /// <summary>
         /// PROBAR FIRMADO CON CERTIFICADO DE CLIENTE POR NIT
         /// </summary>

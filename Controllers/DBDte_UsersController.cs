@@ -50,6 +50,7 @@ namespace ApiContabsv.Controllers
                     .Include(u => u.ParentUser)
                     .Include(u => u.InverseParentUser)
                     .Include(u => u.BranchOffices)
+                      .ThenInclude(b => b.Addresses)
                     //.Include(u => u.ContingencyDocuments)
                     .Include(u => u.ControlNumberSequences)
                     .Include(u => u.DteBalanceControls)
@@ -108,13 +109,11 @@ namespace ApiContabsv.Controllers
         {
             try
             {
-                // Validar ModelState
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(ModelState);
                 }
 
-                // Validaciones de unicidad
                 if (await _context.Users.AnyAsync(u => u.Nit == userDto.Nit))
                     return BadRequest("Ya existe un usuario con este NIT");
 
@@ -127,26 +126,16 @@ namespace ApiContabsv.Controllers
                 if (await _context.Users.AnyAsync(u => u.Phone == userDto.Phone))
                     return BadRequest("Ya existe un usuario con este Teléfono");
 
-                // Validar jerarquía si es sub-usuario
-                if (!userDto.IsMaster && userDto.ParentUserId.HasValue)
-                {
-                    var parentUser = await _context.Users.FindAsync(userDto.ParentUserId.Value);
-                    if (parentUser == null)
-                        return BadRequest("El usuario padre no existe");
 
-                    if (!parentUser.IsMaster)
-                        return BadRequest("El usuario padre debe ser un cliente master");
-                }
 
-                // Mapear DTO a entidad User
                 var user = new User
                 {
                     ClienteId = userDto.ClienteId,
                     IsMaster = userDto.IsMaster,
-                    ParentUserId = userDto.ParentUserId,
                     Nit = userDto.Nit,
                     Nrc = userDto.Nrc,
                     PasswordPri = userDto.PasswordPri,
+                    JwtSecret = userDto.jwtSecret,
                     CommercialName = userDto.CommercialName,
                     EconomicActivity = userDto.EconomicActivity,
                     EconomicActivityDesc = userDto.EconomicActivityDesc,
@@ -155,24 +144,21 @@ namespace ApiContabsv.Controllers
                     Phone = userDto.Phone,
                     YearInDte = userDto.YearInDte,
                     TokenLifetime = userDto.TokenLifetime,
-
-                    // Valores automáticos
                     CreatedAt = DateTime.Now,
                     UpdatedAt = DateTime.Now,
                     Status = true,
-                    AuthType = "standard"
+                    AuthType = "standard",
+                    Ambiente = "00"
                 };
 
                 _context.Users.Add(user);
                 await _context.SaveChangesAsync();
 
-                // Mapear a DTO de respuesta
                 var responseDto = new UserResponseDTO
                 {
                     Id = user.Id,
                     ClienteId = user.ClienteId,
                     IsMaster = user.IsMaster,
-                    ParentUserId = user.ParentUserId,
                     Nit = user.Nit,
                     Nrc = user.Nrc,
                     Status = user.Status,
@@ -186,7 +172,8 @@ namespace ApiContabsv.Controllers
                     YearInDte = user.YearInDte,
                     TokenLifetime = user.TokenLifetime,
                     CreatedAt = user.CreatedAt,
-                    Message = "Usuario DTE creado exitosamente"
+                    Message = "Usuario DTE creado exitosamente",
+                    Ambiente = "00"
                 };
 
                 return CreatedAtAction(nameof(GetUser), new { id = user.Id }, responseDto);
@@ -230,6 +217,8 @@ namespace ApiContabsv.Controllers
                 existingUser.TokenLifetime = user.TokenLifetime;
                 existingUser.Status = user.Status;
                 existingUser.UpdatedAt = DateTime.Now;
+                existingUser.JwtSecret = user.JwtSecret;
+                existingUser.Ambiente = user.Ambiente;
 
                 // Solo actualizar password si viene
                 if (!string.IsNullOrEmpty(user.PasswordPri))
