@@ -36,6 +36,14 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[inv_ordenes_compra]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[inv_ordenes_compra_detalle]",
+         "ObjectType": 0
+      },
+      {
          "Name": "[dbo].[inv_productos]",
          "ObjectType": 0
       },

@@ -211,7 +211,7 @@ namespace ApiContabsv.Controllers
                 if (producto == null)
                     return NotFound("Producto no encontrado.");
 
-                // ✅ GENERAR LOTE AUTOMÁTICO PARA CADA ENTRADA
+                //  GENERAR LOTE AUTOMÁTICO PARA CADA ENTRADA
                 var loteIngresoId = Guid.NewGuid();
 
                 var movimiento = new InvMovimiento
@@ -281,7 +281,7 @@ namespace ApiContabsv.Controllers
                 if (producto == null)
                     return NotFound("Producto no encontrado.");
 
-                // ✅ REVERTIR CANTIDAD DISPONIBLE DEL LOTE ANTERIOR (SOLO ENTRADAS)
+                // REVERTIR CANTIDAD DISPONIBLE DEL LOTE ANTERIOR (SOLO ENTRADAS)
                 if (movimiento.TipoMovimiento == "Entrada" && movimiento.LoteIngreso != null)
                 {
                     // No revertir porque puede afectar ventas ya procesadas con FIFO
@@ -300,14 +300,14 @@ namespace ApiContabsv.Controllers
                 movimiento.CostoUnitario = dto.costoUnitario;
                 movimiento.PrecioVentaUnitario = dto.precioVentaUnitario;
                 movimiento.Lote = dto.lote; // Lote manual sí se puede cambiar
-                                            // ✅ NO CAMBIAR: LoteIngreso, CostoReal, CantidadDisponible
+                                            //  NO CAMBIAR: LoteIngreso, CostoReal, CantidadDisponible
                 movimiento.NumeroSerie = dto.numeroSerie;
                 movimiento.Ubicacion = dto.ubicacion;
                 movimiento.MotivoMovimiento = dto.motivoMovimiento;
                 movimiento.Responsable = dto.responsable;
                 movimiento.Observaciones = dto.observaciones;
 
-                // ✅ ACTUALIZAR CAMPOS FIFO SOLO SI ES ENTRADA
+                // ACTUALIZAR CAMPOS FIFO SOLO SI ES ENTRADA
                 if (dto.tipoMovimiento == "Entrada")
                 {
                     movimiento.CostoReal = dto.costoUnitario;
