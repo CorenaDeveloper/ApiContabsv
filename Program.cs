@@ -59,6 +59,7 @@ try
     builder.Services.AddSingleton<WompiService>();
     builder.Services.AddScoped<IContingencyService, ContingencyService>();
     builder.Services.AddHostedService<ContingencyRetransmissionJob>();
+
     // ============================================
     // CONFIGURACIÓN DE SERVICIOS BÁSICOS
     // ============================================

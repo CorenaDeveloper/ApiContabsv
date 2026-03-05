@@ -1,4 +1,5 @@
-﻿using ApiContabsv.Models.Contabsv;
+﻿using ApiContabsv.Models.Contabilidad;
+using ApiContabsv.Models.Contabsv;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.Annotations;
@@ -10,10 +11,12 @@ namespace ApiContabsv.Controllers
     public class DBContabsv_OrdenesCompraController : Controller
     {
         public readonly ContabsvContext _contabsvContext;
+        public readonly ContabilidadContext _contabilidadContext;
 
-        public DBContabsv_OrdenesCompraController(ContabsvContext contabsvContext)
+        public DBContabsv_OrdenesCompraController(ContabsvContext contabsvContext, ContabilidadContext contabilidadContext)
         {
             _contabsvContext = contabsvContext;
+            _contabilidadContext = contabilidadContext;
         }
 
         // ============================================================
@@ -65,7 +68,7 @@ namespace ApiContabsv.Controllers
         }
 
         [HttpGet("Ordenes/{id}")]
-        [SwaggerOperation(Summary = "Obtener una orden de compra por ID con su detalle.")]
+        [SwaggerOperation(Summary = "Obtener una orden de compra por ID con su detalle y datos del proveedor.")]
         [SwaggerResponse(200, "Operación exitosa")]
         [SwaggerResponse(404, "Orden no encontrada")]
         [SwaggerResponse(500, "Error interno del servidor")]
@@ -73,6 +76,7 @@ namespace ApiContabsv.Controllers
         {
             try
             {
+                // ── 1. Orden + detalle (solo _contabsvContext) ───────────────
                 var orden = await _contabsvContext.InvOrdenesCompras
                     .Where(o => o.IdCompra == id)
                     .Select(o => new
@@ -88,36 +92,84 @@ namespace ApiContabsv.Controllers
                         o.Responsable,
                         detalle = _contabsvContext.InvOrdenesCompraDetalles
                             .Where(d => d.IdCompra == o.IdCompra)
-                            .Select(d => new
-                            {
-                                d.IdDetalle,
-                                d.IdProducto,
-                                d.CantidadOrdenada,
-                                d.CantidadRecibida,
-                                d.CostoUnitario,
-                                d.PrecioVenta,
-                                d.Lote,
-                                d.Observaciones,
-                                nombreProducto = _contabsvContext.InvProductos
-                                    .Where(p => p.IdProducto == d.IdProducto)
-                                    .Select(p => p.Nombre)
-                                    .FirstOrDefault(),
-                                skuProducto = _contabsvContext.InvProductos
-                                    .Where(p => p.IdProducto == d.IdProducto)
-                                    .Select(p => p.Sku)
-                                    .FirstOrDefault(),
-                                imagenProducto = _contabsvContext.InvProductos
-                                    .Where(p => p.IdProducto == d.IdProducto)
-                                    .Select(p => p.Imagen)
-                                    .FirstOrDefault()
-                            }).ToList()
+                            .Join(
+                                _contabsvContext.InvProductos,
+                                d => d.IdProducto,
+                                p => p.IdProducto,
+                                (d, p) => new
+                                {
+                                    d.IdDetalle,
+                                    d.IdCompra,
+                                    d.IdProducto,
+                                    d.CantidadOrdenada,
+                                    d.CantidadRecibida,
+                                    d.CostoUnitario,
+                                    d.PrecioVenta,
+                                    d.Lote,
+                                    d.Observaciones,
+                                    producto = new
+                                    {
+                                        p.IdProducto,
+                                        p.Nombre,
+                                        p.Descripcion,
+                                        p.Sku,
+                                        p.CodigoBarra,
+                                        p.Imagen,
+                                        p.Stock,
+                                        p.PrecioCompra,
+                                        p.PrecioVenta,
+                                        p.UnidadMedida,
+                                        p.FactorCaja,
+                                        p.Peso,
+                                        p.Volumen,
+                                        p.TipoItemId,
+                                        p.CodigoUnidadMh
+                                    }
+                                }
+                            ).ToList()
                     })
                     .FirstOrDefaultAsync();
 
                 if (orden == null)
                     return NotFound("Orden de compra no encontrada.");
 
-                return Ok(orden);
+                // ── 2. Proveedor por separado (_contabilidadContext) ─────────
+                var proveedor = await _contabilidadContext.Proveedores
+                    .Where(p => p.IdProveedor == orden.IdProveedor)
+                    .Select(p => new
+                    {
+                        p.IdProveedor,
+                        p.Nombres,
+                        p.Apellidos,
+                        p.PersonaJuridica,
+                        p.NombreRazonSocial,
+                        p.NombreComercial,
+                        p.TelefonoCliente,
+                        p.Celular,
+                        p.Email,
+                        p.Nrc,
+                        p.NitProveedor,
+                        p.Direccion,
+                        p.TipoContribuyente,
+                        p.RepresentanteLegal
+                    })
+                    .FirstOrDefaultAsync();
+
+                // ── 3. Combinar resultado ────────────────────────────────────
+                return Ok(new
+                {
+                    orden.IdCompra,
+                    orden.IdCliente,
+                    orden.IdProveedor,
+                    orden.NumeroOrden,
+                    orden.FechaOrden,
+                    orden.FechaCierre,
+                    orden.Estado,
+                    orden.Observaciones,
+                    orden.Responsable,
+                    proveedor,
+                    orden.detalle
+                });
             }
             catch (Exception ex)
             {

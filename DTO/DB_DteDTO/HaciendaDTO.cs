@@ -73,6 +73,50 @@ namespace ApiContabsv.DTO.DB_DteDTO
         public string? ErrorDetails { get; set; }
     }
 
+    public class HaciendaConsultaResult
+    {
+        public bool Success { get; set; }
+        public string? Error { get; set; }
+        public string? ErrorDetails { get; set; }
+
+        // Estado en Hacienda
+        public string? Estado { get; set; }
+        public string? SelloRecibido { get; set; }
+        public string? FhProcesamiento { get; set; }
+        public string? CodigoMsg { get; set; }
+        public string? DescripcionMsg { get; set; }
+
+        // Identificación
+        public string? CodigoGeneracion { get; set; }
+        public string? NumeroControl { get; set; }
+        public string? TipoDte { get; set; }
+        public string? FechaEmision { get; set; }
+
+        // Emisor = Proveedor (para precargar formulario de compras)
+        public string? NombreEmisor { get; set; }
+        public string? NitEmisor { get; set; }
+        public string? NrcEmisor { get; set; }
+        public string? CodActividad { get; set; }
+        public string? DescActividad { get; set; }
+        public string? TelefonoEmisor { get; set; }
+        public string? EmailEmisor { get; set; }
+        public string? DireccionEmisor { get; set; }
+
+        // Receptor
+        public string? NombreReceptor { get; set; }
+        public string? NitReceptor { get; set; }
+        public string? NrcReceptor { get; set; }
+
+        // Montos
+        public decimal? TotalNoSujetas { get; set; }
+        public decimal? TotalExentas { get; set; }
+        public decimal? TotalGravadas { get; set; }
+        public decimal? SubTotal { get; set; }
+        public decimal? TotalDescuento { get; set; }
+        public decimal? TotalIva { get; set; }
+        public decimal? TotalPagar { get; set; }
+        public int? CondicionOperacion { get; set; }
+    }
     public class HaciendaAuthResult
     {
         public bool Success { get; set; }
