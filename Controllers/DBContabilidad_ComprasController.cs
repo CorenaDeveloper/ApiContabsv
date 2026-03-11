@@ -325,52 +325,6 @@ namespace ApiContabsv.Controllers
             }
         }
 
-
-        [HttpPut("Compras/Postear")]
-        [SwaggerOperation(
-         Summary = "POSTEA COMPRAS",
-         Description = "Este endpoint permite posterar una o lista de  mediante su id."
-        )]
-        [SwaggerResponse(200, "Operación Exitosa")]
-        [SwaggerResponse(400, "Solicitud incorrecta (datos inválidos)")]
-        [SwaggerResponse(404, "Datos no encontrado")]
-        [SwaggerResponse(500, "Error interno del servidor")]
-        public async Task<IActionResult> PostearCompra([FromBody] PostearComprasDTO c)
-        {
-            if (c.IdsCompra == null || !c.IdsCompra.Any())
-            {
-                return BadRequest("Debe proporcionar al menos un ID de compra.");
-            }
-
-            try
-            {
-                var compras = await contabilidadContext.Compras
-                    .Where(x => c.IdsCompra.Contains(x.IdDocCompra))
-                    .ToListAsync();
-
-                if (compras.Count == 0)
-                {
-                    return NotFound("No se encontraron las compras especificadas.");
-                }
-
-                foreach (var compra in compras)
-                {
-                    compra.Posteado = !compra.Posteado;
-                }
-
-                await contabilidadContext.SaveChangesAsync();
-                return Ok("Cambios realizados correctamente.");
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                return StatusCode(500, "Error de concurrencia al actualizar los datos.");
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Error interno: {ex.Message}");
-            }
-        }
-
         [HttpDelete("Compras/{id}")]
         [SwaggerOperation(
          Summary = "ELIMINA UNA COMPRA",
@@ -401,9 +355,108 @@ namespace ApiContabsv.Controllers
             }
         }
 
-        private bool CompraExists(int id)
+        [HttpPut("Compras/Postear")]
+        [SwaggerOperation(
+            Summary = "POSTEA COMPRAS",
+            Description = "Marca como Posteado = true una lista de compras por sus IDs. Solo afecta las que estén en Posteado = false."
+        )]
+        [SwaggerResponse(200, "Operación Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta")]
+        [SwaggerResponse(404, "No encontradas")]
+        [SwaggerResponse(500, "Error interno")]
+        public async Task<IActionResult> PostearCompra([FromBody] PostearComprasDTO c)
         {
-            return contabilidadContext.Compras.Any(e => e.IdDocCompra == id);
+            if (c.IdsCompra == null || !c.IdsCompra.Any())
+                return BadRequest("Debe proporcionar al menos un ID de compra.");
+
+            try
+            {
+                var compras = await contabilidadContext.Compras
+                    .Where(x => c.IdsCompra.Contains(x.IdDocCompra) && x.Posteado == false)
+                    .ToListAsync();
+
+                if (compras.Count == 0)
+                    return NotFound("No se encontraron compras pendientes para postear.");
+
+                foreach (var compra in compras)
+                    compra.Posteado = true;
+
+                await contabilidadContext.SaveChangesAsync();
+                return Ok($"{compras.Count} compra(s) posteada(s) correctamente.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
         }
+
+        [HttpDelete("Compras/Masivo")]
+        [SwaggerOperation(
+           Summary = "ELIMINA VARIAS COMPRAS",
+           Description = "Elimina una lista de compras por sus IDs. Solo elimina las que no están posteadas."
+       )]
+        [SwaggerResponse(200, "Operación Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta")]
+        [SwaggerResponse(500, "Error interno")]
+        public async Task<IActionResult> DeleteComprasMasivo([FromBody] PostearComprasDTO c)
+        {
+            if (c.IdsCompra == null || !c.IdsCompra.Any())
+                return BadRequest("Debe proporcionar al menos un ID de compra.");
+
+            try
+            {
+                var compras = await contabilidadContext.Compras
+                    .Where(x => c.IdsCompra.Contains(x.IdDocCompra) && x.Posteado == false)
+                    .ToListAsync();
+
+                if (compras.Count == 0)
+                    return NotFound("No se encontraron compras pendientes para eliminar (verifique que no estén posteadas).");
+
+                contabilidadContext.Compras.RemoveRange(compras);
+                await contabilidadContext.SaveChangesAsync();
+
+                return Ok($"{compras.Count} compra(s) eliminada(s) correctamente.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
+        [HttpPut("Compras/Despostear")]
+        [SwaggerOperation(
+            Summary = "DESPOSTEA COMPRAS",
+            Description = "Marca como Posteado = false una lista de compras por sus IDs. Solo afecta las que estén en Posteado = true."
+        )]
+        [SwaggerResponse(200, "Operación Exitosa")]
+        [SwaggerResponse(400, "Solicitud incorrecta")]
+        [SwaggerResponse(404, "No encontradas")]
+        [SwaggerResponse(500, "Error interno")]
+        public async Task<IActionResult> DespostearCompra([FromBody] PostearComprasDTO c)
+        {
+            if (c.IdsCompra == null || !c.IdsCompra.Any())
+                return BadRequest("Debe proporcionar al menos un ID de compra.");
+
+            try
+            {
+                var compras = await contabilidadContext.Compras
+                    .Where(x => c.IdsCompra.Contains(x.IdDocCompra) && x.Posteado == true)
+                    .ToListAsync();
+
+                if (compras.Count == 0)
+                    return NotFound("No se encontraron compras posteadas para despostear.");
+
+                foreach (var compra in compras)
+                    compra.Posteado = false;
+
+                await contabilidadContext.SaveChangesAsync();
+                return Ok($"{compras.Count} compra(s) desposteada(s) correctamente.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
     }
 }
