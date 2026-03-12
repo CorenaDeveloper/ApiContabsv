@@ -12,3 +12,19 @@ obj/
 # Archivos de configuración específicos del usuario
 *.userprefs
 *.usertasks
+
+# ASP.NET Core
+appsettings.Development.json
+appsettings.Production.json
+
+# NuGet
+*.nupkg
+packages/
+
+# Logs
+*.log
+logs/
+
+# Secrets / API Keys
+secrets.json
+appsettings.secrets.json
