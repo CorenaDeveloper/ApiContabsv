@@ -28,3 +28,5 @@ logs/
 # Secrets / API Keys
 secrets.json
 appsettings.secrets.json
+appsettings.Development.json
+appsettings.json
