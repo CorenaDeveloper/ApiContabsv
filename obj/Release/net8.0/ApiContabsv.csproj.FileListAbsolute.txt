@@ -197,3 +197,5 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Serilog.S
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Serilog.Sinks.Console.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Serilog.Sinks.Debug.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\Serilog.Sinks.File.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\SendGrid.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\bin\Release\net8.0\StarkbankEcdsa.dll

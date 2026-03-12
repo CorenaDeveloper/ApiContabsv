@@ -17,6 +17,8 @@ public partial class SeguridadContext : DbContext
 
     public virtual DbSet<App> Apps { get; set; }
 
+    public virtual DbSet<DispositivosConfiable> DispositivosConfiables { get; set; }
+
     public virtual DbSet<ErrorLog> ErrorLogs { get; set; }
 
     public virtual DbSet<Modulo> Modulos { get; set; }
@@ -77,6 +79,25 @@ public partial class SeguridadContext : DbContext
                 .HasMaxLength(100)
                 .IsUnicode(false)
                 .HasColumnName("version_Code");
+        });
+
+        modelBuilder.Entity<DispositivosConfiable>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Disposit__3214EC07E8A2540E");
+
+            entity.Property(e => e.FechaExpiracion).HasColumnType("datetime");
+            entity.Property(e => e.FechaRegistro)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.TokenDispositivo)
+                .IsRequired()
+                .HasMaxLength(100)
+                .IsUnicode(false);
+
+            entity.HasOne(d => d.IdUsuarioNavigation).WithMany(p => p.DispositivosConfiables)
+                .HasForeignKey(d => d.IdUsuario)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_DispositivosConfiables_Usuario");
         });
 
         modelBuilder.Entity<ErrorLog>(entity =>
@@ -175,6 +196,11 @@ public partial class SeguridadContext : DbContext
             entity.Property(e => e.Apellido)
                 .IsRequired()
                 .HasMaxLength(100);
+            entity.Property(e => e.BloqueadoHasta).HasColumnType("datetime");
+            entity.Property(e => e.CodigoExpiracion).HasColumnType("datetime");
+            entity.Property(e => e.CodigoVerificacion)
+                .HasMaxLength(6)
+                .IsUnicode(false);
             entity.Property(e => e.Contraseña)
                 .IsRequired()
                 .HasMaxLength(255);

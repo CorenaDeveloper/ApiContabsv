@@ -79,6 +79,18 @@ public partial class Cliente
 
     public string Whatsapp { get; set; }
 
+    public bool ProcesaInventario { get; set; }
+
+    public string SmtpServer { get; set; }
+
+    public int? SmtpPort { get; set; }
+
+    public string SmtpEmail { get; set; }
+
+    public string SmtpPassword { get; set; }
+
+    public bool? SmtpSsl { get; set; }
+
     public virtual ICollection<HistorialPago> HistorialPagos { get; set; } = new List<HistorialPago>();
 
     public virtual ICollection<Suscripcione> Suscripciones { get; set; } = new List<Suscripcione>();

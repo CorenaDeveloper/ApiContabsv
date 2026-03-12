@@ -1,4 +1,5 @@
-﻿using ApiContabsv.Models.Contabsv;
+﻿using ApiContabsv.DTO.DB_ContabsvDTO;
+using ApiContabsv.Models.Contabsv;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -133,6 +134,7 @@ namespace ApiContabsv.Controllers
                 clienteExistente.Facebook = !string.IsNullOrEmpty(clienteActualizado.Facebook) ? clienteActualizado.Facebook : clienteExistente.Facebook;
                 clienteExistente.Whatsapp = !string.IsNullOrEmpty(clienteActualizado.Whatsapp) ? clienteActualizado.Whatsapp : clienteExistente.Whatsapp;
                 clienteExistente.Instagram = !string.IsNullOrEmpty(clienteActualizado.Instagram) ? clienteActualizado.Instagram : clienteExistente.Instagram;
+                clienteExistente.ProcesaInventario = clienteActualizado.ProcesaInventario;
                 // Campos boolean - actualizar solo si vienen definidos
                 if (clienteActualizado.IsDeclarante != null)
                     clienteExistente.IsDeclarante = clienteActualizado.IsDeclarante;
@@ -149,6 +151,61 @@ namespace ApiContabsv.Controllers
             }
         }
 
+
+        [HttpPut("Clientes/{id}/smtp")]
+        public async Task<IActionResult> PutSmtpCliente(int id, SmtpConfigDTO dto)
+        {
+            try
+            {
+                var cliente = await contabsv_context.Clientes.FindAsync(id);
+                if (cliente == null)
+                    return NotFound("Cliente no encontrado.");
+
+                cliente.SmtpServer = dto.SmtpServer;
+                cliente.SmtpPort = dto.SmtpPort;
+                cliente.SmtpEmail = dto.SmtpEmail;
+                cliente.SmtpSsl = dto.SmtpSsl;
+
+                // Solo actualizar password si viene con valor
+                if (!string.IsNullOrEmpty(dto.SmtpPassword))
+                    cliente.SmtpPassword = dto.SmtpPassword;
+
+                await contabsv_context.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
+
+        [HttpGet("Clientes/{id}/smtp")]
+        public async Task<IActionResult> GetSmtpCliente(int id)
+        {
+            try
+            {
+                var cliente = await contabsv_context.Clientes
+                    .Where(c => c.IdCliente == id)
+                    .Select(c => new
+                    {
+                        c.SmtpServer,
+                        c.SmtpPort,
+                        c.SmtpEmail,
+                        c.SmtpSsl,
+                        tienePassword = !string.IsNullOrEmpty(c.SmtpPassword)
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (cliente == null)
+                    return NotFound("Cliente no encontrado.");
+
+                return Ok(cliente);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno: {ex.Message}");
+            }
+        }
         /// <summary>
         /// 
         /// </summary>

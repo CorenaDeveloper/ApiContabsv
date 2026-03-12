@@ -44,6 +44,7 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Ou
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Microsoft.Win32.SystemEvents.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Newtonsoft.Json.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Scrutor.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\SendGrid.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Serilog.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Serilog.AspNetCore.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Serilog.Extensions.Hosting.dll
@@ -53,6 +54,7 @@ C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Ou
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Serilog.Sinks.Console.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Serilog.Sinks.Debug.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Serilog.Sinks.File.dll
+C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\StarkbankEcdsa.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.Annotations.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.Filters.dll
 C:\Users\programador04\Documents\GitHub\ApiContabsv\obj\Release\net8.0\PubTmp\Out\Swashbuckle.AspNetCore.Filters.Abstractions.dll

@@ -140,9 +140,22 @@ public partial class ContabsvContext : DbContext
                 .IsUnicode(false)
                 .HasColumnName("pass_hacienda");
             entity.Property(e => e.PersonaJuridica).HasColumnName("personaJuridica");
+            entity.Property(e => e.ProcesaInventario)
+                .HasDefaultValue(true)
+                .HasColumnName("procesaInventario");
             entity.Property(e => e.RepresentanteLegal)
                 .HasMaxLength(120)
                 .HasColumnName("representanteLegal");
+            entity.Property(e => e.SmtpEmail)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.SmtpPassword)
+                .HasMaxLength(255)
+                .IsUnicode(false);
+            entity.Property(e => e.SmtpServer)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(e => e.SmtpSsl).HasDefaultValue(true);
             entity.Property(e => e.TelefonoCliente)
                 .HasMaxLength(20)
                 .IsUnicode(false)

@@ -27,5 +27,15 @@ public partial class Usuario
 
     public int? IdRol { get; set; }
 
+    public int IntentosFallidos { get; set; }
+
+    public DateTime? BloqueadoHasta { get; set; }
+
+    public string CodigoVerificacion { get; set; }
+
+    public DateTime? CodigoExpiracion { get; set; }
+
+    public virtual ICollection<DispositivosConfiable> DispositivosConfiables { get; set; } = new List<DispositivosConfiable>();
+
     public virtual Rol IdRolNavigation { get; set; }
 }

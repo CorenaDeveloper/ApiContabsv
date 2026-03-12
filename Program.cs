@@ -60,7 +60,9 @@ try
     builder.Services.AddScoped<IContingencyService, ContingencyService>();
     builder.Services.AddHostedService<ContingencyRetransmissionJob>();
     builder.Services.AddScoped<IImportarDteService, ImportarDteService>();
-
+    builder.Services.AddScoped<IEmailService, EmailService>();
+    builder.Services.AddScoped<IDispositivoService, DispositivoService>();
+    builder.Services.AddScoped<IEmailClienteService, EmailClienteService>();
     // ============================================
     // CONFIGURACIÓN DE SERVICIOS BÁSICOS
     // ============================================
